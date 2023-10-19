@@ -1,0 +1,3 @@
+(sym_lib_table
+  (lib (name "omodri_lib")(type "KiCad")(uri "${KIPRJMOD}/omodri_lib.kicad_sym")(options "")(descr "Component list for udrive3 project"))
+)
