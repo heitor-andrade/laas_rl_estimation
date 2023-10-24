@@ -212,12 +212,20 @@ void COM_msgCreate(motor_t* p_motor_m1, motor_t* p_motor_m2, slv2mst_msg_t* p_ms
     p_msg->velocity[MOTOR_1]            = (int16_t)(p_foc->motor_acq.ia       / CURRENT_LSB);
     p_msg->current[MOTOR_1]             = (int16_t)(p_foc->current       / CURRENT_LSB);
     p_msg->coilRes[MOTOR_1]             = (uint16_t)(p_foc->tension       / CURRENT_LSB);
-    p_msg->adcSamples[MOTOR_1]          = (uint16_t)(p_foc->motor_acq.vbus      / SUPPLY_LSB);
-    p_msg->velocity[MOTOR_2]            = (int16_t)(p_foc->dtc_u       / CURRENT_LSB);
+    p_msg->adcSamples[MOTOR_1]          = (uint16_t)(p_foc->dc_current      / CURRENT_LSB);
+    p_msg->velocity[MOTOR_2]            = (int16_t)(p_foc->test             / CURRENT_LSB);
     p_msg->current[MOTOR_2]             = (int16_t)(p_foc->current_case         / CURRENT_LSB);
     p_msg->coilRes[MOTOR_2]             = (uint16_t)(p_foc->frequence);
-    p_msg->adcSamples[MOTOR_2]          = (uint16_t)(p_foc->inductance_line      / CURRENT_LSB);
+    p_msg->adcSamples[MOTOR_2]          = (uint16_t)( p_foc->inductance_line      / RESISTANCE_LSB);
 
+    // p_msg->velocity[MOTOR_1]            = (int16_t)(p_foc->motor_acq.ia       / CURRENT_LSB);
+    // p_msg->current[MOTOR_1]             = (int16_t)(p_foc->current       / CURRENT_LSB);
+    // p_msg->coilRes[MOTOR_1]             = (uint16_t)(p_foc->tension       / CURRENT_LSB);
+    // p_msg->adcSamples[MOTOR_1]          = (uint16_t)(p_foc->motor_acq.vbus      / SUPPLY_LSB);
+    // p_msg->velocity[MOTOR_2]            = (int16_t)(p_foc->dtc_u       / CURRENT_LSB);
+    // p_msg->current[MOTOR_2]             = (int16_t)(p_foc->current_case         / CURRENT_LSB);
+    // p_msg->coilRes[MOTOR_2]             = (uint16_t)(p_foc->frequence);
+    // p_msg->adcSamples[MOTOR_2]          = (uint16_t)(p_foc->inductance_line      / CURRENT_LSB);
 
 
     p_msg->status.bit.SE                = p_cmd_reg->systemEnable;  // System enabled

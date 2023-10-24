@@ -134,143 +134,132 @@ inline bool_t MOT_runControl(motor_t* p_motor)
         p_motor->motor_state    = (en_bit.systemEnable)             ? (p_motor->motor_state)    : (MOTOR_STATE_INIT);
         FOC_runControl(p_foc);
 
-        // p_foc->dtc_u = p_foc->motor_cmd.kpCoeff;
-        // p_foc->dtc_v = p_foc->motor_cmd.velRef;
-        // p_foc->dtc_w = p_foc->motor_cmd.iqff;
+        p_foc->dtc_u = p_foc->motor_cmd.kpCoeff;
+        p_foc->dtc_v = p_foc->motor_cmd.velRef;
+        p_foc->dtc_w = p_foc->motor_cmd.iqff;
 
-        if (p_foc->motor_acq.ia < 3 & p_foc->motor_acq.ib < 3 & p_foc->motor_acq.ic < 3){
+        // if (p_foc->motor_acq.ia < 5.5 & p_foc->motor_acq.ib < 5.5 & p_foc->motor_acq.ic < 5.5){
 
-        p_foc->inductance_line = 0.0002;
-
-        /****** COMPUTE CURRENT AUTOMATIC ***/ 
+        // /****** COMPUTE CURRENT AUTOMATIC ***/ 
         
-        static const float offset = 0.05;
-        static int   f = 10;                // Hz
-        static const float amplitude = 0.01;        // Amplitude
+        // static const float offset = 0.12;
+        // static float   f;                // Hz
+        // static const float amplitude = 0.01;        // Amplitude
 
-        static unsigned int time;
-        static bool filled_vector = false;
+        // static unsigned int time;
+        // static bool filled_vector = false;
 
-        float dc_tension, dc_current;
+        // static float dc_tension, dc_current;
 
-        p_foc->dtc_v = 0;
-        p_foc->dtc_w = 0;
-        p_foc->frequence = f;
-        // p_foc->dc_current = dc_current;
-        // p_foc->dc_tension = dc_tension;
-        time += 1;
-
-        // Compute dc current 
-        if (p_foc->current_case == 0){
-            p_foc->dtc_u = offset;
-            dc_current = p_foc->motor_acq.ia;
-            dc_tension = offset * p_foc->motor_acq.vbus;
-            p_foc->current = dc_current;
-            p_foc->tension = dc_tension;
-
-            if (time % 4000 == 0)
-                p_foc->current_case = 1;
-        }
-
-        // Get drops of currents by rising the frequence
-        else if (p_foc->current_case == 1){
-            
-            p_foc->dtc_u = offset + amplitude * __sin(f * 2*M_PI * time / 40000);
-            
-            static const int num_measurements = 80;
-            static int index_count = 0;
-
-            static double sum_current = 0.0;
-            static float ias[num_measurements];
-            float current_measurement = p_foc->motor_acq.ia;
-            float first_measurement = ias[index_count]; // Oldest reading
-            
-            ias[index_count] = current_measurement;
-            sum_current += current_measurement;
-            sum_current -= first_measurement;
-
-
-            static double sum_tension = 0.0;
-            static float uas[num_measurements];
-            float tension_measurement = p_foc->dtc_u * p_foc->motor_acq.vbus;
-            first_measurement = uas[index_count]; // Oldest reading
-            uas[index_count] = tension_measurement;
-            sum_tension += tension_measurement;
-            sum_tension -= first_measurement;
-
-            index_count++;
-            if (index_count == num_measurements){ 
-                index_count = 0;
-                filled_vector = true;
-                }
-            
-            p_foc->current = sum_current / num_measurements;
-            p_foc->tension = sum_tension / num_measurements;
-
-            // Go to next case if we have enough drop of current
-            if( (p_foc->current < p_foc->dc_current * 0.75) & filled_vector){
-                p_foc->current_case = 2;
-            }
-
-            if (time % 4000 == 0){ // Entry each 100 ms
-                if (f < 1000)
-                    f *= 10;        // f = {10, 100, 1000}
-                else if(f < 4000 )
-                    f += 1000;      // f = {1000, 2000, 3000, 4000}
-                else{
-                    p_foc->current_case = 2;
-                }
-            }
-        }
-
-        // Calculate Inductance
-        else if (p_foc->current_case == 2){
-            float dc_impedance, ac_impedance, reactance;
-            
-            dc_impedance = dc_tension / dc_current;
-
-            ac_impedance = p_foc->tension / p_foc->current;
-            reactance = __sqrt(ac_impedance*ac_impedance - dc_impedance*dc_impedance);
-            // inductance_line = reactance / (2 * M_PI * f);
-            p_foc->inductance_line = 0.0002; //inductance_line;
-            p_foc->current_case = -1;
-
-        }
-        // Finish test
-        else{
-            p_foc->dtc_u = 0;
-            p_foc->dtc_v = 0;
-            p_foc->dtc_w = 0;
-        }
-    
-        }
-        else{
-            p_foc->dtc_u = 0;
-            p_foc->dtc_v = 0;
-            p_foc->dtc_w = 0;
-        }
-        // define the drop of current waited
-
-        // calculates mean current
-        // calculate resistance
-
-
-
-        // // Compute tension for inductance calculations
-
-        // p_foc->dtc_u = offset + amplitude * __sin(f * 2*M_PI * time / 40000);
         // p_foc->dtc_v = 0;
         // p_foc->dtc_w = 0;
+        // p_foc->frequence = f;
         // time += 1;
+        // f = 1000;
 
-        // // Compute mean current and mean tensions of the lasts 1000 reading
+        // // Compute dc current 
+        // if (p_foc->current_case == 0){
+        //     p_foc->dtc_u = offset;
+        //     dc_current = p_foc->motor_acq.ia;
+        //     dc_tension = offset * p_foc->motor_acq.vbus;
+        //     p_foc->dc_current = dc_current;
+        //     p_foc->dc_tension = dc_tension;
+        //     p_foc->current = dc_current;
+        //     p_foc->tension = dc_tension;
+            
+        //     if (time % 40000 == 0)
+        //         p_foc->current_case = 1;
+        // }
+
+        // // Get drops of currents by rising the frequence
+        // else if (p_foc->current_case == 1){
+            
+        //     p_foc->dtc_u = offset + amplitude * __sin(f * 2*M_PI * time / 40000);
+            
+        //     static const int num_measurements = 80;
+        //     static int index_count = 0;
+
+        //     static double sum_current = 0.0;
+        //     static float ias[num_measurements];
+        //     float current_measurement = p_foc->motor_acq.ia;
+        //     float first_measurement = ias[index_count]; // Oldest reading
+            
+        //     ias[index_count] = current_measurement;
+        //     sum_current += current_measurement;
+        //     sum_current -= first_measurement;
 
 
-        if (p_foc->motor_acq.ia > 6  || p_foc->motor_acq.ib > 6 || p_foc->motor_acq.ic > 6){
-            p_foc->dtc_u = 0;
-            p_foc->dtc_v = 0;
-            p_foc->dtc_w = 0;
-        }
+        //     static double sum_tension = 0.0;
+        //     static float uas[num_measurements];
+        //     float tension_measurement = p_foc->dtc_u * p_foc->motor_acq.vbus;
+        //     first_measurement = uas[index_count]; // Oldest reading
+        //     uas[index_count] = tension_measurement;
+        //     sum_tension += tension_measurement;
+        //     sum_tension -= first_measurement;
+
+        //     index_count++;
+        //     if (index_count == num_measurements){ 
+        //         index_count = 0;
+        //         filled_vector = true;
+        //         }
+            
+        //     p_foc->current = sum_current / num_measurements;
+        //     p_foc->tension = sum_tension / num_measurements;
+
+        //     // // Go to next case if we have enough drop of current
+        //     // if( (p_foc->current < p_foc->dc_current * 0.75) & filled_vector){
+        //     //     p_foc->current_case = 2;
+        //     // }
+
+        //     if (time % 20000 == 0)
+        //         p_foc->current_case = 2;
+
+        //     // if (time % (4000*5) == 0){ // Entry each 100 ms
+                
+        //     //     if (f < 1000)
+        //     //         f *= 10;        // f = {100, 1000}
+        //     //     else if(f < 4000 )
+        //     //         f += 1000;      // f = {1000, 2000, 3000, 4000}
+        //     //     else{
+        //     //         p_foc->current_case = 2;
+        //     //     }
+            
+        //     // }
+        // }
+
+        // // Calculate Inductance
+        // else if (p_foc->current_case == 2){
+        //     float dc_impedance, ac_impedance, reactance;
+            
+        //     dc_impedance = p_foc->dc_tension / p_foc->dc_current;
+
+        //     ac_impedance = p_foc->tension / p_foc->current;
+        //     reactance = sqrt(ac_impedance*ac_impedance - dc_impedance*dc_impedance);
+        //     p_foc->test = reactance;
+        //     p_foc->inductance_line = reactance / (2 * M_PI * f);
+        //     // p_foc->inductance_line = sqrt(ac_impedance*ac_impedance - dc_impedance*dc_impedance); // __sqrtf()
+        //     p_foc->current_case = -1;
+
+        // }
+        // // Finish test
+        // else{
+        //     p_foc->dtc_u = 0;
+        //     p_foc->dtc_v = 0;
+        //     p_foc->dtc_w = 0;
+        // }
+    
+        // }
+        // else{
+        //     p_foc->dtc_u = 0;
+        //     p_foc->dtc_v = 0;
+        //     p_foc->dtc_w = 0;
+        // }
+
+        // if (p_foc->motor_acq.ia > 5.5  || p_foc->motor_acq.ib > 5.5 || p_foc->motor_acq.ic > 5.5){
+        //     p_foc->dtc_u = 0;
+        //     p_foc->dtc_v = 0;
+        //     p_foc->dtc_w = 0;
+        // }
 
         MOT_runCommand(p_motor, p_foc->dtc_u, p_foc->dtc_v, p_foc->dtc_w);
         break;

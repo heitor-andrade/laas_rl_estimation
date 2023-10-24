@@ -170,10 +170,12 @@ typedef struct __foc_control_t__
     lpf_t               resEstFlt;      /*!< Q-axis resistance estimation filter structure */
     float               current;
     float               tension;
-    int16_t            current_case;
+    int16_t             current_case;
     float               frequence;
     float               dc_current;
+    float               dc_tension;
     float               inductance_line;
+    float               test;
 } foc_t;
 
 /***********************************************************************

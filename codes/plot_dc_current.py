@@ -12,26 +12,18 @@ vas = [dcas[i]*vsupplys[i] for i in range(len(dcas))]
 vbs = [dcbs[i]*vsupplys[i] for i in range(len(dcbs))]
 vcs = [dccs[i]*vsupplys[i] for i in range(len(dccs))]
 
-fig, ax = plt.subplots(2)
-ax[0].plot(dcas, ias, '.', label = "ias")
-ax[0].plot(dcas, ibs, label = "ibs")
-ax[0].plot(dcas, ics, '.', label = "ics")
-# ax[0].plot(vas, ias, '.', label = "ias")
-# ax[0].plot(dcbs, ibs, '.', label = "ibs")
-# ax[0].plot(dccs, ics, '.', label = "ics")
-ax[0].set_title(f"Tension X Current")
-ax[0].set_xlabel("Duty Cicle")
-ax[0].set_ylabel("Current [A]")
-ax[0].grid()
-ax[0].legend()
+ias_multi = [0.587, 0.666, 0.744, 0.821, 0.897]
+dcas_multi = [0.0275, 0.03, 0.0325, 0.0350, 0.0375]
 
-
-# ax[1].plot(times, vas, '.', label = "va")
-# ax[1].plot(times, vbs, '.', label = "vb")
-# ax[1].plot(times, vcs, '.', label = "vc")
-ax[1].plot(times, vsupplys, '.', label = "vsupplys")
-# ax[1].plot(times, vsupplys, '.', label = "vsupplys")
-ax[1].legend()
+plt.plot(dcas, ias, '.', label = "ias")
+plt.plot(dcas_multi, ias_multi, '.', label = "ias multimeter")
+# plt.plot(dcas, ibs, label = "ibs")
+# plt.plot(dcas, ics, '.', label = "ics")
+plt.title(f"Duty Cicle X Current")
+plt.xlabel("Duty Cicle")
+plt.ylabel("Current [A]")
+plt.grid()
+plt.legend()
 plt.show()
 
 ### Calculate Resistance
@@ -58,6 +50,7 @@ dcas = dcas[init_dc_index:end_dc_index]
 vas = vas[init_dc_index:end_dc_index]
 ias = ias[init_dc_index:end_dc_index]
 
+
 def lstq(x, y):
     n = len(x)
     
@@ -79,14 +72,17 @@ m, offset = lstq(ias, vas)
 xs = np.linspace(ias[0], ias[-1])
 plt.plot(ias, vas, '.', label = "vas")
 plt.plot(xs, xs*m + offset, label = f"i = {round(m, 2)}u + {round(offset, 2)}")
-plt.title(f"Tension X Current")
-plt.xlabel("Tension [V] = (Duty cicle * V supply)")
-plt.ylabel("Current [A]")
+plt.title(f"Current x Tension")
+plt.ylabel("Tension [V] = (Duty cicle * V supply)")
+plt.xlabel("Current [A]")
 plt.grid()
 plt.legend()
 plt.show()
 
-res_eq = m
+dx = ias[-1] - ias[0]
+dy = vas[-1] - vas[0]
+
+res_eq = dy/dx
 r1 = 2*res_eq/3
 
 print("Resistance equivalent and phase: ", round(res_eq, 2), round(r1, 2))

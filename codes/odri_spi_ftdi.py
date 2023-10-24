@@ -156,7 +156,7 @@ class SPIuDriver:
       self.tension0 = data[8]  / (1<<11)
       self.tension1 = data[9]  # / (1<<11)
       self.supply0 = data[10]  / (1<<11)
-      self.supply1 = data[11]  / (1<<11)
+      self.supply1 = data[11]  / (1<<24)
       #print("velocity =", self.velocity0)
       #print("cur =", self.current0)
       self.count_crc = 0

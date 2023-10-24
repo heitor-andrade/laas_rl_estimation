@@ -12,7 +12,7 @@ ud = SPIuDriver(absolutePositionMode=False, waitForInit=True)
 ud.transfer()
 
 # data to be stored
-times, vsupplys, ias, dcas, currents, tensions, mean_currents, mean_tensions, frequences, inductance_lines = [], [], [], [], [], [], [], [], [], []
+times, vsupplys, ias, dcas, currents, tensions, current_cases, frequences, inductance_lines = [], [], [], [], [], [], [], [], []
 
 # Principal loop 
 dt          = 0.001  # Period Loop
@@ -22,50 +22,28 @@ init_time   = time.time()
 count_print = 0
 current_case = 0
 
-f_init, f_end = 100, 5000
-frequences = np.logspace(np.log10(f_init), np.log10(f_end))
-index_freq = 0
-
-# Set offset and amplitude of duty cicle
-offset = 0.05
-amplitude = 0.01
-
-
-while current_case != -1 index_freq <= len(frequences):
+while current_case != -1:
     
     now = time.time() - init_time
     
-    # Set frequence and tension waveform
-    freq = frequences[index_freq]
-    if now - time_freq > 0.1:
-        index_freq += 1
-        time_freq = now
+    # Store data
+    times.append(round(now, 3))
+    vsupplys.append(round(ud.supply0, 2))
+    ias.append(round(ud.velocity0, 3))
+    currents.append(round(ud.current0, 3))
+    tensions.append(round(ud.tension0, 3))
+    dcas.append(round(ud.velocity1, 3))
+    current_cases.append(round(ud.current1))
+    frequences.append(round(ud.tension1, 3))
+    inductance_lines.append(ud.supply1)
 
-    # Define Data to send
-    ud.# offset
-    ud.# amplitude
-    ud.# frequence
-
-    # Store data after 10ms that the frequence changed
-    if now - time_freq > 0.01:
-        times.append(round(now, 3))
-        vsupplys.append(round(ud.supply0, 2))
-        ias.append(round(ud.velocity0, 3))
-        currents.append(round(ud.current0, 3))
-        tensions.append(round(ud.tension0, 3))
-        dcas.append(round(ud.velocity1, 3))
-        inductance_lines.append(ud.supply1)
-
-        mean_currents.append(round(ud.current0, 3))
-        mean_tensions.append(round(ud.tension0, 3))
-        frequences.append(round(freq))
-
+    current_case = round(ud.current1)
 
     count_print += 1
     if count_print == 1:
         print(
                 "current_case : ", current_case, 
-                "frequence: ", freq,
+                "frequence: ", round(ud.tension1),
                 "current: ", round(ud.current0, 3),
                 "tension: ", round(ud.tension0, 3),
                 "inductance: ", ud.supply1,
@@ -93,7 +71,7 @@ print("inductance phase ", inductance_line*2/3)
 
 # Save data in file
 f = open("current_ac.txt", "w")
-f.write("Time, Vsupply, ia, dca, current, tension, frequence, inductance_line\n")
+f.write("Time, Vsupply, ia, dca, current, tension, current_case, frequence, inductance_line\n")
 
 for i in range(len(times)):
     f.write(str(times[i]) + ", " 
@@ -102,6 +80,7 @@ for i in range(len(times)):
             + str(dcas[i]) + ", " 
             + str(currents[i]) + ", "
             + str(tensions[i]) + ", " 
+            + str(current_cases[i]) + ", " 
             + str(frequences[i]) + ", " 
             + str(inductance_lines[i])
             + "\n")

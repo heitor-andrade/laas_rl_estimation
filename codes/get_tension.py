@@ -36,7 +36,7 @@ now = time.time() - init_time
 
 LIMIT_CURRENT = 7
 
-while ud.velocity0 < LIMIT_CURRENT and ud.current0 < LIMIT_CURRENT and ud.tension0 < LIMIT_CURRENT and now < 2:
+while ud.velocity0 < LIMIT_CURRENT and ud.current0 < LIMIT_CURRENT and ud.tension0 < LIMIT_CURRENT and now < 3:
     
     now = time.time() - init_time
     
@@ -87,9 +87,16 @@ while ud.velocity0 < LIMIT_CURRENT and ud.current0 < LIMIT_CURRENT and ud.tensio
     #     if case == 2:
     #         ud.kp0, ud.refVelocity0, ud.refCurrent0 = 0, 0, tensions[index_tension]     # va, vb, vc
 
-    ud.kp0, ud.refVelocity0, ud.refCurrent0 = 0.13, 0, 0     # va, vb, vc
+    ud.kp0              = 0.0350     #va # 0.0375     
+    ud.refVelocity0     = 0     #vb
+    ud.refCurrent0      = 0     #vc
 
-
+    # Duty cicle, Graph [A] , Multimer [A]
+    # 0.0275    , 2         , 0.587
+    # 0.0300    , 1.3       , 0.666
+    # 0.0325    , 1.3       , 0.744
+    # 0.0350    , 1.3       , 0.821
+    # 0.0375    , 1.3       , 0.897
 
     # fail safe
     if ud.velocity0 > 100 or ud.velocity0 > LIMIT_CURRENT or ud.current0 > LIMIT_CURRENT or ud.tension0 > LIMIT_CURRENT:
