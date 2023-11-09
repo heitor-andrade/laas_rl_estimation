@@ -85,6 +85,7 @@ inline bool_t MOT_runControl(motor_t* p_motor)
     p_motor->motor_error.bit.enc_mismatch   = p_enc->indexDetect && p_enc->indexError;
     p_motor->motor_state        = (p_motor->motor_error.all)        ? (MOTOR_STATE_ERROR)       : (p_motor->motor_state);
 #endif
+    bool compute_rl = false;
 
     switch(p_motor->motor_state)
     {
@@ -96,7 +97,7 @@ inline bool_t MOT_runControl(motor_t* p_motor)
         p_motor->motor_state    = (en_bit.motorEnable)              ? (MOTOR_STATE_ALIGN_UP)    : (MOTOR_STATE_INIT);
         p_motor->motor_state    = (en_bit.systemEnable)             ? (p_motor->motor_state)    : (MOTOR_STATE_INIT);
         ENC_resetPeriph(p_enc);
-        FOC_resetStruct(p_foc);
+        // FOC_resetStruct(p_foc);
         MOT_stopCommand(p_motor);
         break;
 
@@ -111,157 +112,281 @@ inline bool_t MOT_runControl(motor_t* p_motor)
         (p_motor->motor_state  != MOTOR_STATE_ALIGN_UP)             ? (ENC_resetStruct(p_enc))  : (p_enc->thetaElec = enc_theta[id]);
         FOC_runControl(p_foc);
         MOT_runCommand(p_motor, p_foc->dtc_u, p_foc->dtc_v, p_foc->dtc_w);
+
         break;
 
     case MOTOR_STATE_ALIGN_FIX:
         p_motor->itCnt         += 1U; // wait 2s
         p_foc->idRef            = p_foc->iAlignMax; // Maintain alignment current
         p_foc->iqRef            = 0.0f;
-        p_motor->motor_state    = (p_motor->itCnt < (2 * PWM_FREQ)) ? (MOTOR_STATE_ALIGN_FIX)   : (MOTOR_STATE_READY);
-        p_motor->motor_state    = (en_bit.motorEnable)              ? (p_motor->motor_state)    : (MOTOR_STATE_INIT);
-        p_motor->motor_state    = (en_bit.systemEnable)             ? (p_motor->motor_state)    : (MOTOR_STATE_INIT);
+        p_motor->motor_state    = (p_motor->itCnt < (2 * PWM_FREQ))                             ? (MOTOR_STATE_ALIGN_FIX)   : (MOTOR_STATE_READY);
+        p_motor->motor_state    = ((p_motor->motor_state == MOTOR_STATE_READY) & compute_rl)    ? (MOTOR_STATE_COMPUTE_RL)  : (p_motor->motor_state);
+        p_motor->motor_state    = (en_bit.motorEnable)                                          ? (p_motor->motor_state)    : (MOTOR_STATE_INIT);
+        p_motor->motor_state    = (en_bit.systemEnable)                                         ? (p_motor->motor_state)    : (MOTOR_STATE_INIT);
         ENC_resetPeriph(p_enc);
         ENC_resetStruct(p_enc);
         FOC_runControl(p_foc);
         MOT_runCommand(p_motor, p_foc->dtc_u, p_foc->dtc_v, p_foc->dtc_w);
+
+        break;
+    case MOTOR_STATE_COMPUTE_RL:
+        p_motor->motor_state    = (p_motor->statorIndEst == 0)        ? (MOTOR_STATE_COMPUTE_RL)  : (MOTOR_STATE_READY);
+        p_motor->motor_state    = (en_bit.motorEnable)              ? (p_motor->motor_state)    : (MOTOR_STATE_INIT);
+        p_motor->motor_state    = (en_bit.systemEnable)             ? (p_motor->motor_state)    : (MOTOR_STATE_INIT);
+
+
         break;
 
     case MOTOR_STATE_READY:
-        p_motor->itCnt         += 1U;
+        // p_motor->itCnt         += 1U;
         p_foc->idRef            = 0.0f;
         p_foc->iqRef            = FOC_runPD(&p_foc->pdPosVel);
         p_motor->motor_state    = (en_bit.motorEnable)              ? (MOTOR_STATE_READY)       : (MOTOR_STATE_STOP);
         p_motor->motor_state    = (en_bit.systemEnable)             ? (p_motor->motor_state)    : (MOTOR_STATE_INIT);
-        FOC_runControl(p_foc);
+        // FOC_runControl(p_foc);
+        // MOT_runCommand(p_motor, p_foc->dtc_u, p_foc->dtc_v, p_foc->dtc_w);
 
-        p_foc->dtc_u = p_foc->motor_cmd.kpCoeff;
-        p_foc->dtc_v = p_foc->motor_cmd.velRef;
-        p_foc->dtc_w = p_foc->motor_cmd.iqff;
 
-        // if (p_foc->motor_acq.ia < 5.5 & p_foc->motor_acq.ib < 5.5 & p_foc->motor_acq.ic < 5.5){
+        // statorResEst variables
+        const float MIN_CURRENT = 4;
+        const float MAX_CURRENT = 5;
+        const float DTC_VARIATION = 1/100;
 
-        // /****** COMPUTE CURRENT AUTOMATIC ***/ 
-        
-        // static const float offset = 0.12;
-        // static float   f;                // Hz
-        // static const float amplitude = 0.01;        // Amplitude
+        // statorIndEst variables
+        const float OFFSET = 0.06;
+        const float AMPLITUDE = 0.01;
+        static bool frequence_changed = false;
 
-        // static unsigned int time;
-        // static bool filled_vector = false;
 
-        // static float dc_tension, dc_current;
-
-        // p_foc->dtc_v = 0;
-        // p_foc->dtc_w = 0;
-        // p_foc->frequence = f;
-        // time += 1;
-        // f = 1000;
-
-        // // Compute dc current 
-        // if (p_foc->current_case == 0){
-        //     p_foc->dtc_u = offset;
-        //     dc_current = p_foc->motor_acq.ia;
-        //     dc_tension = offset * p_foc->motor_acq.vbus;
-        //     p_foc->dc_current = dc_current;
-        //     p_foc->dc_tension = dc_tension;
-        //     p_foc->current = dc_current;
-        //     p_foc->tension = dc_tension;
+        if( !(p_motor->dtc_initialized) & p_motor->comp_resistance){
             
-        //     if (time % 40000 == 0)
-        //         p_foc->current_case = 1;
-        // }
-
-        // // Get drops of currents by rising the frequence
-        // else if (p_foc->current_case == 1){
+            p_foc->dtc_u = 0;
             
-        //     p_foc->dtc_u = offset + amplitude * __sin(f * 2*M_PI * time / 40000);
+            p_motor->itCnt         += 1U;
+            if(p_motor->itCnt  % 20000)
+                p_motor->dtc_initialized = true;
+        }
+        else if (p_motor->comp_resistance){            // Compute p_foc->motor_cfg.Rs
+            if (p_motor->min_dtc == 0 || p_motor->max_dtc == 0){          // Compute p_motor->min_dtc and p_motor->max_dtc
+                float current = p_foc->motor_acq.ia;
+
+                if (current >= MIN_CURRENT & p_motor->min_dtc == 0){
+                    p_motor->min_dtc = p_foc->dtc_u;
+                    p_motor->min_current = current;
+                    }
+                if (current >= MAX_CURRENT & p_motor->max_dtc == 0){
+                    p_motor->max_dtc = p_foc->dtc_u;
+                    p_motor->max_current = current;
+                    }
+
+                p_motor->itCnt         += 1U;
+                if ((p_motor->itCnt % 100 == 0) & p_foc->dtc_u < 0.16)
+                    p_foc->dtc_u = p_foc->dtc_u + 0.001;
+            }
+            else {
+                p_foc->motor_cfg.Rs = ((p_motor->max_dtc - p_motor->min_dtc) * p_foc->motor_acq.vbus) / (p_motor->max_current - p_motor->min_current);
+                p_motor->comp_resistance = false;
+                p_motor->itCnt = 0;
+                p_motor->max_current = 0;
+                p_motor->min_current = 10;
+                p_motor->frequence = 100;
+                p_motor->initialize_current_flt = true;
+                p_motor->first_frequence = true;
+                p_motor->gain_current = 1;
+            }
+//            p_motor->test = p_foc->dtc_u;
+//            p_motor->test1 = p_motor->min_dtc;
+//            p_motor->test2 = p_motor->max_dtc;
+        }
+        else{
             
-        //     static const int num_measurements = 80;
-        //     static int index_count = 0;
+            // To-do: filtro passa baixa com alpha alto, media com x pontos, fourier e calculo da magnitude 
 
-        //     static double sum_current = 0.0;
-        //     static float ias[num_measurements];
-        //     float current_measurement = p_foc->motor_acq.ia;
-        //     float first_measurement = ias[index_count]; // Oldest reading
-            
-        //     ias[index_count] = current_measurement;
-        //     sum_current += current_measurement;
-        //     sum_current -= first_measurement;
+            float current_measured = p_foc->motor_acq.ia;
+            float error, alpha;
+            // static bool first_frequence = true;
+            // static const float di = 0.01f;
+            // static const int counter_tolerance = 4;
+            // static float frequence_ressonance = 0;
+            // static float gain_current = 1;
+
+            p_motor->itCnt         += 1U;
+
+            // Set frequence e reset variables
+            if (( (p_motor->itCnt % 40000) == 0) & (p_motor->frequence < 700) ){
+
+                p_motor->amplitude = (p_motor->max_current - p_motor->min_current) / 2;
+
+                // Compute gain
+                if(p_motor->first_frequence){      // Get first amplitude_current
+                    p_motor->A0 = p_motor->amplitude;
+                    p_motor->first_frequence = false;
+                }
+                else{                                   // Compute current gain
+                    p_motor->gain_current = p_motor->amplitude / p_motor->A0;
+                    if(p_motor->gain_current <= FM_1DIVSQRT2){
+                        p_motor->frequence_ressonance = p_motor->frequence;
+                    }
+                }
+
+                p_motor->frequence += 100;
+                p_motor->min_current = 10;
+                p_motor->max_current = 0;
+                p_motor->frequence_iteration = p_motor->itCnt;
+            }
 
 
-        //     static double sum_tension = 0.0;
-        //     static float uas[num_measurements];
-        //     float tension_measurement = p_foc->dtc_u * p_foc->motor_acq.vbus;
-        //     first_measurement = uas[index_count]; // Oldest reading
-        //     uas[index_count] = tension_measurement;
-        //     sum_tension += tension_measurement;
-        //     sum_tension -= first_measurement;
 
-        //     index_count++;
-        //     if (index_count == num_measurements){ 
-        //         index_count = 0;
-        //         filled_vector = true;
-        //         }
-            
-        //     p_foc->current = sum_current / num_measurements;
-        //     p_foc->tension = sum_tension / num_measurements;
+            // Filter current
+            if(p_motor->initialize_current_flt & p_motor->itCnt > 1000){
+                p_motor->current_flt = p_foc->motor_acq.ia;
+                p_motor->initialize_current_flt = false;
+            }
 
-        //     // // Go to next case if we have enough drop of current
-        //     // if( (p_foc->current < p_foc->dc_current * 0.75) & filled_vector){
-        //     //     p_foc->current_case = 2;
-        //     // }
+            error = current_measured - p_motor->current_flt;
+            if ((error > 0.1) || (error < -0.1)){
+                alpha = 0.1;
+            }
+            else{
+                alpha = 1;
+            }
 
-        //     if (time % 20000 == 0)
-        //         p_foc->current_case = 2;
+            p_motor->current_flt = p_motor->current_flt + alpha*(current_measured - p_motor->current_flt);
 
-        //     // if (time % (4000*5) == 0){ // Entry each 100 ms
+            if(p_motor->itCnt  - p_motor->frequence_iteration > 10000){
+                if (p_motor->current_flt > p_motor->max_current)
+                    p_motor->max_current = p_motor->current_flt;
+                if (p_motor->current_flt < p_motor->min_current)
+                    p_motor->min_current = p_motor->current_flt;
+            }
+
+
+            if (p_motor->frequence_ressonance != 0){ // Compute statorIndEst
+                float impedance_ac = p_foc->motor_cfg.Rs/p_motor->gain_current;                      // Impedance gain is the invese of current_gain. Z = U/I
+                float reactance = __sqrtf(impedance_ac*impedance_ac - p_foc->motor_cfg.Rs*p_foc->motor_cfg.Rs);
+                p_motor->statorIndEst = reactance / (2 * M_PI * p_motor->frequence_ressonance);
+            }
+
+            p_motor->test = p_motor->statorIndEst;
+            p_motor->test1 = p_foc->motor_cfg.Rs;
+            p_motor->test2 = p_motor->frequence;
+
+
+            // // Compute amplitude                
+            // if(current_flt > max_current)
+            //     counter_max++;
+            // if(current_flt < min_current)
+            //     counter_min++;
+            // if((p_motor->itCnt % 80) == 0){ // happens each period 0.002 s
+            //     if (counter_max > counter_tolerance)
+            //         {max_current += di;}
+            //     else 
+            //         {max_current -= di/100;}
+            //     if (counter_min > 10)
+            //         min_current -= di;
+            //     else 
+            //         {min_current += di/100;}
                 
-        //     //     if (f < 1000)
-        //     //         f *= 10;        // f = {100, 1000}
-        //     //     else if(f < 4000 )
-        //     //         f += 1000;      // f = {1000, 2000, 3000, 4000}
-        //     //     else{
-        //     //         p_foc->current_case = 2;
-        //     //     }
+            //     counter_max = 0;
+            //     counter_min = 0;
+            // }
             
-        //     // }
-        // }
 
-        // // Calculate Inductance
-        // else if (p_foc->current_case == 2){
-        //     float dc_impedance, ac_impedance, reactance;
-            
-        //     dc_impedance = p_foc->dc_tension / p_foc->dc_current;
+            // if (p_motor->itCnt % 40000) {
 
-        //     ac_impedance = p_foc->tension / p_foc->current;
-        //     reactance = sqrt(ac_impedance*ac_impedance - dc_impedance*dc_impedance);
-        //     p_foc->test = reactance;
-        //     p_foc->inductance_line = reactance / (2 * M_PI * f);
-        //     // p_foc->inductance_line = sqrt(ac_impedance*ac_impedance - dc_impedance*dc_impedance); // __sqrtf()
-        //     p_foc->current_case = -1;
+            //     // Compute current gain
 
-        // }
-        // // Finish test
-        // else{
+
+
+            // }
+                // Compute amplitude
+                // static float p_motor->max_currents[3] = {-100, -100, -100};
+                // static float min_currents[3] = {100, 100, 100};
+
+                // static float last_current, A0, frequence_ressonance = 0;
+                // static float gain_current = 1;
+                // static bool get_next_current_max = false;
+                // static bool get_next_current_min = false;
+                // static bool first_frequence = true;
+                // static float amplitude_current = 0;
+
+
+
+                // // Get max and min currents for each frequence
+                // if(current > p_motor->max_currents[1]){
+                //     p_motor->max_currents[1] = current;
+                //     p_motor->max_currents[0] = last_current;
+                //     get_next_current_max = true;
+                // }
+                // else{
+                //     if (get_next_current_max){
+                //         p_motor->max_currents[2] = current;
+                //         get_next_current_max = false;
+                //     }
+                // }
+                // if(current < min_currents[1]){
+                //     min_currents[1] = current;
+                //     min_currents[0] = last_current;
+                //     get_next_current_min = true;
+                // }
+                // else{
+                //     if (get_next_current_min){
+                //         min_currents[2] = current;
+                //         get_next_current_min = false;
+                //     }
+                // }
+                // last_current = current;
+
+
+
+
+                // if (frequence_changed){ 
+                //     frequence_changed = false;
+
+                //     // Compute current amplitude
+                //     // float mean_max, mean_min;
+                //     // mean_max = (p_motor->max_currents[0] + p_motor->max_currents[1] + p_motor->max_currents[2])/3;
+                //     // mean_min = (min_currents[0] + min_currents[1] + min_currents[2])/3;
+                //     // amplitude_current = (mean_max - mean_min) / 2;
+                //     amplitude_current = (max_current - min_current) / 2;
+                //     max_current = -100;
+                //     min_current = 100;
+
+                //     int i;
+                //     for(i = 0; i < 3; i++){
+                //         p_motor->max_currents[i] = -100;
+                //         min_currents[i] = 100;
+                //     }
+
+
+                // }
+
+            p_foc->dtc_u = OFFSET + AMPLITUDE * __sin(p_motor->frequence * 2 * M_PI * p_motor->itCnt / 40000);
+        }
+
+        // if (p_motor->statorIndEst != 0){
+        //     ENC_resetPeriph(p_enc);
+        //     ENC_resetStruct(p_enc);
+        //     FOC_runControl(p_foc);
         //     p_foc->dtc_u = 0;
-        //     p_foc->dtc_v = 0;
-        //     p_foc->dtc_w = 0;
-        // }
-    
-        // }
-        // else{
-        //     p_foc->dtc_u = 0;
-        //     p_foc->dtc_v = 0;
-        //     p_foc->dtc_w = 0;
         // }
 
-        // if (p_foc->motor_acq.ia > 5.5  || p_foc->motor_acq.ib > 5.5 || p_foc->motor_acq.ic > 5.5){
-        //     p_foc->dtc_u = 0;
-        //     p_foc->dtc_v = 0;
-        //     p_foc->dtc_w = 0;
-        // }
-
+        p_foc->dtc_v = 0;
+        p_foc->dtc_w = 0;
         MOT_runCommand(p_motor, p_foc->dtc_u, p_foc->dtc_v, p_foc->dtc_w);
+
+        // Variable persistance test
+        // if (p_foc->test == 0){
+        //     p_foc->test   = 1;
+        // }
+        // else if (p_foc->test == 1){
+        //     volatile float temp_current = 0.1f;
+        //     p_foc->current = 0.1f;
+        //     // p_foc->current = temp_current;
+        //     p_foc->test =2;
+        // }
+        // else if (p_foc->test == 2){
+        // }
         break;
 
     case MOTOR_STATE_STOP:

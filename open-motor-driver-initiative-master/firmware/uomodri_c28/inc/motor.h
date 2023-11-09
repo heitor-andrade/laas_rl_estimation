@@ -31,6 +31,7 @@ typedef enum
     MOTOR_STATE_ALIGN_FIX       = 0x02,
     MOTOR_STATE_READY           = 0x04,
     MOTOR_STATE_STOP            = 0x08,
+    MOTOR_STATE_COMPUTE_RL      = 0x10,
     MOTOR_STATE_ERROR           = 0xFF,
 } motor_state_e;
 
@@ -88,6 +89,29 @@ typedef struct __MOTOR_STRUCT_t__
     uint64_t                        itCnt;          /*!< Event counter incrementing on every IT call */
     uint32_t                        clCycleNb;
     float32_t                       statorResEst;   /*!< Q-axis resistance estimation. [Ohm] */
+    float32_t                       min_dtc;
+    float32_t                       max_dtc;
+    bool                            dtc_initialized; // initialize like false
+    bool                            comp_resistance; // initialize like false
+    
+    float32_t                       statorIndEst;   /*!< Q-axis inductance estimation. [Henry] */
+    float32_t                       min_current;
+    float32_t                       max_current;
+    float32_t                       current_flt;
+    float32_t                       amplitude;
+    float32_t                       frequence;
+    float32_t                       frequence_ressonance;
+    float32_t                       A0;
+    float32_t                       gain_current;
+    int                             frequence_iteration;
+    bool                            initialize_current_flt; 
+    bool                            first_frequence; 
+
+    
+    float32_t                       test;
+    float32_t                       test1;
+    float32_t                       test2;
+    float                           max_currents[3];
     lpf_t                           statorResEstFlt;/*!< Resistance estimation low-pass filter */
     motor_state_e                   motor_state;    /*!< Current motor state for the FSM. */
     error_reg_u                     motor_error;    /*!< Error messages */

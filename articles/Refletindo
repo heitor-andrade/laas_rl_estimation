@@ -1,8 +1,20 @@
-polos
-	o que sao?
-	como calcular a quantidade?
-	para que serve?
-		mais eficiencia nos campos? pq?
-		
-			
 escorregamento
+
+indutancia transiente - leakage?
+	Z = jwLt
+	w de 300 Hz para motor com frequencia nominal de 50Hz
+	pequenas voltagens para linearidade em pequenos pontos
+	superposicao com correntes dc pre definidas
+	Goertzel algoritmo para fasor da corrente em relacao a fasor da tensao
+
+	Como funciona Goertzel?
+		fourier do primeiro harmonico
+		deixar na forma de quadrante
+
+
+indutancia magnetica
+	
+
+
+
+

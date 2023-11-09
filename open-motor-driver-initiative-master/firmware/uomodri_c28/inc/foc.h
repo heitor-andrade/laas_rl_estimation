@@ -125,7 +125,7 @@ typedef struct __cmd_t__
     float32_t   posRef;
     float32_t   velRef;
     float32_t   iqff;
-    float32_t   kpCoeff;
+    int         kpCoeff;
     float32_t   kdCoeff;
     float32_t   iSat;
     uint16_t    timeoutRef;
@@ -168,7 +168,6 @@ typedef struct __foc_control_t__
     pd_t                pdPosVel;       /*!< PD controller structure for position/velocity control */
     float32_t           resEst;         /*!< Q-axis resistance estimation - [Ohm] */
     lpf_t               resEstFlt;      /*!< Q-axis resistance estimation filter structure */
-    float               current;
     float               tension;
     int16_t             current_case;
     float               frequence;
@@ -176,7 +175,27 @@ typedef struct __foc_control_t__
     float               dc_tension;
     float               inductance_line;
     float               test;
+    float               current;
+    int                 current_index;
+    int                 time;
+    float               currents[30];
 } foc_t;
+
+typedef struct __estimator__
+{
+    float32_t   posRef;
+    float32_t   velRef;
+    float32_t   iqff;
+    int         kpCoeff;
+    float32_t   kdCoeff;
+    float32_t   iSat;
+    uint16_t    timeoutRef;
+    uint16_t    cptTimeout;
+    uint16_t    index;
+    cmd_reg_u   enableReg;
+} estimator;
+
+
 
 /***********************************************************************
  * DEFINES

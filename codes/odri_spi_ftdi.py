@@ -118,11 +118,12 @@ class SPIuDriver:
 
     rawRefVel0  = int(self.refVelocity0 * (1<<11))
     rawRefIq0   = int(self.refCurrent0  * (1<<11))
-    rawKp0      = int(self.kp0  * (1<<11))
+    rawKp0      = int(self.kp0)
+    rawKd0      = int(self.kd0 * (1<<11))
 
 
     rawKp1 = int(self.kp1*(1<<11)*(2*pi) )
-    rawKd0 = int(self.kd0*(1<<10)*(2*pi*1000./60.0) )
+    # rawKd0 = int(self.kd0*(1<<10)*(2*pi*1000./60.0) )
     rawKd1 = int(self.kd1*(1<<10)*(2*pi*1000./60.0) )
     commandPacket = bytearray(struct.pack(">BBiihhhhHHHHBBHI",mode,timeout,rawRefPos0,rawRefPos1,rawRefVel0,rawRefVel1,rawRefIq0,rawRefIq1,rawKp0,rawKp1,rawKd0,rawKd1, rawIsat0, rawIsat1, 0,0))
     crc=crc32(commandPacket[:-4])
@@ -149,8 +150,8 @@ class SPIuDriver:
       self.position1 = data[3] / (1<<24) * 2.0 * pi + self.offset1
 
 
-      self.velocity0 = data[4] / (1<<11)
-      self.velocity1 = data[5] / (1<<11)
+      self.velocity0 = data[4] / (1<<24)
+      self.velocity1 = data[5] # / (1<<11)
       self.current0 = data[6]  / (1<<11)
       self.current1 = data[7]  / (1<<11)
       self.tension0 = data[8]  / (1<<11)

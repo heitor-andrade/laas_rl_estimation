@@ -12,7 +12,7 @@ ud = SPIuDriver(absolutePositionMode=False, waitForInit=True)
 ud.transfer()
 
 # data to be stored
-times, vsupplys, ias, dcas, currents, tensions, mean_currents, mean_tensions, frequences, inductance_lines = [], [], [], [], [], [], [], [], [], []
+tests, vsupplys, ias, ias_dc, dcas = [], [], [], [], []
 
 # Principal loop 
 dt          = 0.001  # Period Loop
@@ -20,62 +20,68 @@ t           = time.perf_counter()
 init_time   = time.time()
 
 count_print = 0
-current_case = 0
+data_size = 30
+data_index = 0
+last_data_index = -1
 
-f_init, f_end = 100, 5000
-frequences = np.logspace(np.log10(f_init), np.log10(f_end))
-index_freq = 0
+test = 0
 
-# Set offset and amplitude of duty cicle
-offset = 0.05
-amplitude = 0.01
-
-
-while current_case != -1 index_freq <= len(frequences):
+state = 0
+ud.refVelocity0 = 0
+ud.refCurrent0 = 0.01
+while True:
     
     now = time.time() - init_time
     
-    # Set frequence and tension waveform
-    freq = frequences[index_freq]
-    if now - time_freq > 0.1:
-        index_freq += 1
-        time_freq = now
+    # if state == 0:  # Define Data to send and get dc_current
+    #     ud.refCurrent0 = 0.09           # duty_cicle
+    #     ud.refVelocity0 = 0             # test_case
+    #     dc_current = ud.velocity0
 
-    # Define Data to send
-    ud.# offset
-    ud.# amplitude
-    ud.# frequence
+    #     if now > 0.5 :
+    #         state = 1
+    #         time_start = now
 
-    # Store data after 10ms that the frequence changed
-    if now - time_freq > 0.01:
-        times.append(round(now, 3))
-        vsupplys.append(round(ud.supply0, 2))
-        ias.append(round(ud.velocity0, 3))
-        currents.append(round(ud.current0, 3))
-        tensions.append(round(ud.tension0, 3))
-        dcas.append(round(ud.velocity1, 3))
-        inductance_lines.append(ud.supply1)
+    #         ud.refVelocity0 = 1         # test_case
+    #         ud.kp0 = 0                  # data_index
 
-        mean_currents.append(round(ud.current0, 3))
-        mean_tensions.append(round(ud.tension0, 3))
-        frequences.append(round(freq))
+    # elif now - time_start > 1 and state == 1:      # Get_data after tests finished [2 seconds]
+    #     ud.refVelocity0 = 3             # test_case
+        
+    #     if data_index == last_data_index:
+    #         data_index += 1
+    #         ud.kp0 = data_index                   # data_index
+    #         if data_index == data_size:
+    #             # ud.kp0 = data_index
+    #             break
+    #     else:
+    #         print(
+    #                 "current", round(ud.current0, 3),
+    #                 "test", ud.current1,
+    #                 "test_case", ud.tension0
+    #                 )
 
+    #         tests.append(test)
+    #         vsupplys.append(round(ud.supply0, 2))
+    #         ias.append(round(ud.current0, 3))
+    #         ias_dc.append(round(dc_current, 3))
+    #         dcas.append(round(ud.velocity1, 3))
+            
+    #         last_data_index = data_index
+    
 
-    count_print += 1
-    if count_print == 1:
-        print(
-                "current_case : ", current_case, 
-                "frequence: ", freq,
-                "current: ", round(ud.current0, 3),
-                "tension: ", round(ud.tension0, 3),
-                "inductance: ", ud.supply1,
-                "reactance: ",  ud.velocity1
-                )
-        count_print = 0        
+    # count_print += 1
+    # if count_print == 1:
+    #     print(
+    #             "dc", ud.velocity1, 
+    #             "current", ud.velocity0,
+    #             "index desired", ud.kp0,
+    #             "index obtained", ud.current1)
+    #     count_print = 0        
 
 
     # fail safe
-    if ud.velocity0 > 5.5:
+    if ud.velocity0 > 4:
         print("Stopped!", ud.velocity0)
         break
 
@@ -86,24 +92,16 @@ while current_case != -1 index_freq <= len(frequences):
 
 ud.stop() # Terminate
 
-print(current_case)
-inductance_line = inductance_lines[-1]
-print("inductance line ", inductance_line)
-print("inductance phase ", inductance_line*2/3)
-
 # Save data in file
 f = open("current_ac.txt", "w")
-f.write("Time, Vsupply, ia, dca, current, tension, frequence, inductance_line\n")
+f.write("tests, Vsupply, ia, ia continous, dca\n")
 
-for i in range(len(times)):
-    f.write(str(times[i]) + ", " 
+for i in range(len(tests)):
+    f.write(str(tests[i]) + ", " 
             + str(vsupplys[i]) + ", "
             + str(ias[i]) + ", " 
-            + str(dcas[i]) + ", " 
-            + str(currents[i]) + ", "
-            + str(tensions[i]) + ", " 
-            + str(frequences[i]) + ", " 
-            + str(inductance_lines[i])
+            + str(ias_dc[i]) + ", " 
+            + str(dcas[i])
             + "\n")
 f.close()
 

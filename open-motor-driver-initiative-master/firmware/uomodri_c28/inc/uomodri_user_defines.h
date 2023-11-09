@@ -33,11 +33,11 @@
 // Cores activation ENABLE/DISABLE
 #define CPU1_CORE_ENABLE                        (1)
 #define CPU2_CORE_ENABLE                        (0)
-#define CM_CORE_ENABLE                          (1)
+#define CM_CORE_ENABLE                          (0)
 #define CLA_CORE_ENABLE                         (0)
 // CM peripherals ENABLE/DISABLE
 #define USB_BUS_ENABLE                          (0)
-#define UART_BUS_ENABLE                         (1)
+#define UART_BUS_ENABLE                         (0)
 // Communication peripherals ENABLE/DISABLE
 #define CAN_BUS_ENABLE                          (0)
 #define RS485_BUS_ENABLE                        (0)
@@ -77,6 +77,10 @@
 
 #ifndef FM_SQRT3
 #define FM_SQRT3                                1.7320508075688772935274463415059f  /* sqrt(3) */
+#endif
+
+#ifndef FM_1DIVSQRT2
+#define FM_1DIVSQRT2                            0.7071067811865475f                 /* 1/sqrt(2) */
 #endif
 
 #ifndef FM_1DIVSQRT3
@@ -1056,7 +1060,7 @@
 #define MOTOR1_KE                               (FM_SQRT3 / (MOTOR1_KV * FM_RPM2RADPS))   //1.0 / (MOTOR1_KV * FM_RPM2RAD * MOTOR1_POLES_PAIRS) // Motor back EMF constant (V/rad/s)
 #define MOTOR1_KI                               (0.1f)      // Motor torque constant (N.m/A)
 #define MOTOR1_RS                               (0.53f)     // Stator resistance (ohm)
-#define MOTOR1_LS                               (210e-6f)   // Stator d-axis inductance (H)
+#define MOTOR1_LS                               (153e-6f)   // Stator d-axis inductance (H)
 #define MOTOR1_POLES_PAIRS                      (12.0f)     // Number of poles
 #define MOTOR1_CURRENT_CUTOFF_FREQ              (1000.0f)   // Current loop bandwidth (Hz)
 #define MOTOR1_CURRENT_TIME_CONST               (2.0f * M_PI * MOTOR1_CURRENT_CUTOFF_FREQ * PWM_PERIOD)

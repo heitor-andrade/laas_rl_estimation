@@ -393,6 +393,7 @@ static foc_t motor_foc[] =
   .pdPosVel.derivative                      = 0.0f,
   .pdPosVel.p_ff                            = (float32_t *)(&motor_foc[MOTOR_1].motor_cmd.iqff),
   .pdPosVel.p_sat                           = (float32_t *)(&motor_foc[MOTOR_1].motor_cmd.iSat),
+  .test                                     = 0.0f,
   //--- FOC - Q-axis resistance estimation ------------------------------------
   .resEst                                   = 1.0f,
   //--- Resistance estimation low-pass filter ---------------------------------
@@ -569,6 +570,7 @@ static foc_t motor_foc[] =
 //  .pdPosVel.ff                          = 0.0f,
 //  .pdPosVel.sat                         = 0.0f,
 //  .pdPosVel.out                            = 0.0f,
+  .test                                     = 0.0f,
   //--- FOC - Q-axis resistance estimation ------------------------------------
   .resEst                                   = 0.0f,
   //--- Resistance estimation low-pass filter ---------------------------------
@@ -605,6 +607,13 @@ static motor_t motor[2] =
   .motor_error.all  = 0,
   .clCycleNb        = 0,
   .itCnt            = 0,
+  .statorResEst     = 0,
+  .comp_resistance  = true,
+  .dtc_initialized  = false,
+  .max_currents[0]  = -100,
+  .max_currents[1]  = -100,
+  .max_currents[2]  = -100,
+  .statorIndEst     = 0,
   .itDone           = false,
   .p_motorChAReg    = (volatile uint16_t *)(MOTOR1_PWM1_CMD_ADDR),
   .p_motorChBReg    = (volatile uint16_t *)(MOTOR1_PWM2_CMD_ADDR),
@@ -622,6 +631,8 @@ static motor_t motor[2] =
   .motor_error.all  = 0,
   .clCycleNb        = 0,
   .itCnt            = 0,
+  .statorResEst     = 0,
+  .statorIndEst     = 0,
   .itDone           = false,
   .p_motorChAReg    = (volatile uint16_t *)(MOTOR2_PWM1_CMD_ADDR),
   .p_motorChBReg    = (volatile uint16_t *)(MOTOR2_PWM2_CMD_ADDR),

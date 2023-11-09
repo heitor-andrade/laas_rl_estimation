@@ -25,17 +25,19 @@ bool_t COM_msgExtract(mst2slv_msg_t* p_msg,  cmd_t* p_cmd_m1,  cmd_t* p_cmd_m2)
         // p_cmd_m1->velRef                = (float32_t)(p_msg->velocity[MOTOR_1]  * VELOCITY_LSB      * FM_KRPM2RADPS);
         // p_cmd_m1->iqff                  = (float32_t)(p_msg->current[MOTOR_1]   * IQ_LSB);
 
-        p_cmd_m1->kpCoeff               = (float32_t)(p_msg->kpCoeff[MOTOR_1]   * CURRENT_LSB);
+        p_cmd_m1->kpCoeff               = (int)(p_msg->kpCoeff[MOTOR_1]);
         p_cmd_m1->velRef                = (float32_t)(p_msg->velocity[MOTOR_1]  * CURRENT_LSB);
         p_cmd_m1->iqff                  = (float32_t)(p_msg->current[MOTOR_1]   * CURRENT_LSB);
+        p_cmd_m1->kdCoeff               = (float32_t)(p_msg->kdCoeff[MOTOR_1]   * CURRENT_LSB);
+        p_cmd_m1->timeoutRef            = (uint16_t)p_msg->mode.bit.TIMEOUT;
         
         
         // p_cmd_m1->kpCoeff               = (float32_t)(p_msg->kpCoeff[MOTOR_1]   * KP_LSB            * FM_RAD2ROUND);
-        p_cmd_m1->kdCoeff               = (float32_t)(p_msg->kdCoeff[MOTOR_1]   * KD_LSB            * FM_RADPS2KRPM);
+        // p_cmd_m1->kdCoeff               = (float32_t)(p_msg->kdCoeff[MOTOR_1]   * KD_LSB            * FM_RADPS2KRPM);
         float32_t isat                  = (float32_t)(MSB_16(p_msg->iSat)       * CURRENT_SAT_LSB);
         p_cmd_m1->iSat                  = (isat < MOTOR1_CURRENT_CMD_SAT_MAX)   ? (isat)            : (MOTOR1_CURRENT_CMD_SAT_MAX);
         p_cmd_m1->iSat                  = (p_cmd_m1->iSat > 0.0f)               ? (p_cmd_m1->iSat)  : (MOTOR1_CURRENT_CMD_SAT_MAX);
-        p_cmd_m1->timeoutRef            = (uint16_t)p_msg->mode.bit.TIMEOUT;
+        // p_cmd_m1->timeoutRef            = (uint16_t)p_msg->mode.bit.TIMEOUT;
         p_cmd_m1->cptTimeout            = 0U;
         p_cmd_m1->index                 = p_msg->index;
         p_cmd_reg->encOffsetEnable      = (bool_t)p_msg->mode.bit.EI1OC;
@@ -133,7 +135,7 @@ bool_t COM_msgExtract_cla(mst2slv_msg_cla_t* p_msg, cmd_t* p_cmd_m1, cmd_t* p_cm
         break;
 
     case COM_RX_STATE_KP_MOT1:
-        p_cmd_m1->kpCoeff   = (float32_t)(p_msg->msg_rx * KP_LSB * FM_RAD2ROUND);
+        // p_cmd_m1->kpCoeff   = (float32_t)(p_msg->msg_rx * KP_LSB * FM_RAD2ROUND);
         COM_crc32_cla(p_msg);
         break;
 
@@ -208,15 +210,15 @@ void COM_msgCreate(motor_t* p_motor_m1, motor_t* p_motor_m2, slv2mst_msg_t* p_ms
     // p_msg->coilRes[MOTOR_1]             = (uint16_t)(p_foc->resEst              / RESISTANCE_LSB);
 
 
+    p_msg->velocity[MOTOR_1]            = (int16_t)(p_motor_m1->test            / POSITION_LSB);
+    p_msg->current[MOTOR_1]             = (int16_t)(p_motor_m1->test1           / CURRENT_LSB);
+    p_msg->coilRes[MOTOR_1]             = (uint16_t)(p_foc->tension             / CURRENT_LSB);
+    p_msg->adcSamples[MOTOR_1]          = (uint16_t)(p_foc->motor_acq.vbus      / SUPPLY_LSB);
 
-    p_msg->velocity[MOTOR_1]            = (int16_t)(p_foc->motor_acq.ia       / CURRENT_LSB);
-    p_msg->current[MOTOR_1]             = (int16_t)(p_foc->current       / CURRENT_LSB);
-    p_msg->coilRes[MOTOR_1]             = (uint16_t)(p_foc->tension       / CURRENT_LSB);
-    p_msg->adcSamples[MOTOR_1]          = (uint16_t)(p_foc->dc_current      / CURRENT_LSB);
-    p_msg->velocity[MOTOR_2]            = (int16_t)(p_foc->test             / CURRENT_LSB);
-    p_msg->current[MOTOR_2]             = (int16_t)(p_foc->current_case         / CURRENT_LSB);
+    p_msg->velocity[MOTOR_2]            = (int16_t)(p_motor_m1->test2);
+    p_msg->current[MOTOR_2]             = (int16_t)(p_foc->test                 / CURRENT_LSB);
     p_msg->coilRes[MOTOR_2]             = (uint16_t)(p_foc->frequence);
-    p_msg->adcSamples[MOTOR_2]          = (uint16_t)( p_foc->inductance_line      / RESISTANCE_LSB);
+    p_msg->adcSamples[MOTOR_2]          = (uint16_t)( p_foc->inductance_line    / RESISTANCE_LSB);
 
     // p_msg->velocity[MOTOR_1]            = (int16_t)(p_foc->motor_acq.ia       / CURRENT_LSB);
     // p_msg->current[MOTOR_1]             = (int16_t)(p_foc->current       / CURRENT_LSB);

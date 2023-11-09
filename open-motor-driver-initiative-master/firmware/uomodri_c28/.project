@@ -344,7 +344,7 @@
 		</variable>
 		<variable>
 			<name>SYSCONFIG_TOOL</name>
-			<value>file:/home/habreudean/ti/ccs1230/ccs/utils/sysconfig_1.16.1/sysconfig_cli.bat</value>
+			<value>file:/home/habreudean/ti/ccs1230/ccs/utils/sysconfig_1.16.1/sysconfig_cli.sh</value>
 		</variable>
 	</variableList>
 </projectDescription>

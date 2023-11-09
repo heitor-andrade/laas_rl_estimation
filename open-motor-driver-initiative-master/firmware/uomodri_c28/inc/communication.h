@@ -312,7 +312,7 @@ typedef struct __cmd_uomodri_t__
     float           posRef[2];
     float           velRef[2];
     float           iqRef[2];
-    float           kpCoeff[2];
+    int             kpCoeff[2];
     float           kdCoeff[2];
     float           iSat[2];
     uint32_t        cptTimeout;
