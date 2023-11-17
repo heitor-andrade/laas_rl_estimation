@@ -15,8 +15,12 @@ vcs = [dccs[i]*vsupplys[i] for i in range(len(dccs))]
 ias_multi = [0.587, 0.666, 0.744, 0.821, 0.897]
 dcas_multi = [0.0275, 0.03, 0.0325, 0.0350, 0.0375]
 
-plt.plot(dcas, ias, '.', label = "ias")
-plt.plot(dcas_multi, ias_multi, '.', label = "ias multimeter")
+ias_multi2 = [1.448, 1.797, 2.176, 2.528, 3.25, 3.6, 3.96, 4.33]
+dcas_multi2 = [0.05, 0.06, 0.07, 0.08, 0.1, 0.11, 0.12, 0.13]
+
+
+plt.plot(dcas, ias, '.', label = "Current")
+plt.plot(dcas_multi + dcas_multi2, ias_multi + ias_multi2, label = "Current multimeter")
 # plt.plot(dcas, ibs, label = "ibs")
 # plt.plot(dcas, ics, '.', label = "ics")
 plt.title(f"Duty Cicle X Current")

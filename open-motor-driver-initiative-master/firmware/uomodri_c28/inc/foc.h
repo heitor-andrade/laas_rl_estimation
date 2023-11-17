@@ -168,17 +168,6 @@ typedef struct __foc_control_t__
     pd_t                pdPosVel;       /*!< PD controller structure for position/velocity control */
     float32_t           resEst;         /*!< Q-axis resistance estimation - [Ohm] */
     lpf_t               resEstFlt;      /*!< Q-axis resistance estimation filter structure */
-    float               tension;
-    int16_t             current_case;
-    float               frequence;
-    float               dc_current;
-    float               dc_tension;
-    float               inductance_line;
-    float               test;
-    float               current;
-    int                 current_index;
-    int                 time;
-    float               currents[30];
 } foc_t;
 
 typedef struct __estimator__

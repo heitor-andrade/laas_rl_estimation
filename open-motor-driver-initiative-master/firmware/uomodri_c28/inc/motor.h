@@ -80,39 +80,46 @@ typedef union __uint16_u__
     volatile const uint32_t         align;
 } uint16_u;
 
+typedef struct __estimator_rl__
+{
+    float32_t                       statorResEst;               /*!< Stator resistance estimation. [Ohm] */
+    float32_t                       inf_dtc;                    /*!< Minimum duty-cicle utilised to resistance estimation [no measurement unit] */
+    float32_t                       inf_vbus;                   /*!< Voltage at source when min_dtc is assigned [V] */
+    float32_t                       sup_dtc;                    /*!< Maximum duty-cicle utilised to resistance estimation [no measurement unit] */
+    float32_t                       sup_vbus;                   /*!< Voltage at source when max_dtc is assigned [V] */
+    bool                            dtc_initialize;            /*!< Indicates whether the duty cycle should be initialized */
+    bool                            comp_resistance;            /*!< Indicates whether the resistance should be computed */
+    
+    float32_t                       statorIndEst;               /*!< Q-axis inductance estimation. [Henry] */
+    float32_t                       current_flt;                /*!< Filtered current */
+    float32_t                       amplitude;                  /*!< Current amplitude [A] */
+    float32_t                       inf_current;                /*!< Minimum current value when sinusoidal voltage is applied [A] */
+    float32_t                       sup_current;                /*!< Maximum current value when sinusoidal voltage is applied [A] */
+    float32_t                       A0;                         /*!< First amplitude calculated */
+    float32_t                       gain_current;               /*!< Gain in current amplitude compared to A0 */
+    float32_t                       frequence;                  /*!< Frequency applied to the voltage [Hz] */
+    float32_t                       frequence_ressonance;       /*!< First frequency that causes a gain of less than 1/sqrt(2). Frequency used directly in the inductance calculation. [Hz]*/
+    uint32_t                        frequence_iteration;        /*!< Indicates the iteration of the code in which the frequency value was changed */
+    bool                            initialize_current_flt;     /*!< Indicates whether the current filter should be initialized */
+    bool                            first_frequence;            /*!< Indicates whether the current frequency is the first one applied */
+
+} estimator_rl;
+
+
 typedef struct __MOTOR_STRUCT_t__
 {
     const uint8_t                   motor_id;       /*!< Motor identification */
     const hal_motor_cfg_t*  const   p_motorHalCfg;  /*!< Pointer on the HAL structure (PWM, ADC , IT) associated to the motor */
     drv8353_t* const                p_motorDRV;     /*!< Pointer on the DRV structure associated to the motor */
     foc_t* const                    p_motorFOC;     /*!< Pointer on the FOC structure associated to the motor */
+    estimator_rl* const             p_motorRLE;     /*!< Pointer on the RL estimator structure associated to the motor */
     uint64_t                        itCnt;          /*!< Event counter incrementing on every IT call */
     uint32_t                        clCycleNb;
-    float32_t                       statorResEst;   /*!< Q-axis resistance estimation. [Ohm] */
-    float32_t                       min_dtc;
-    float32_t                       max_dtc;
-    bool                            dtc_initialized; // initialize like false
-    bool                            comp_resistance; // initialize like false
-    
-    float32_t                       statorIndEst;   /*!< Q-axis inductance estimation. [Henry] */
-    float32_t                       min_current;
-    float32_t                       max_current;
-    float32_t                       current_flt;
-    float32_t                       amplitude;
-    float32_t                       frequence;
-    float32_t                       frequence_ressonance;
-    float32_t                       A0;
-    float32_t                       gain_current;
-    int                             frequence_iteration;
-    bool                            initialize_current_flt; 
-    bool                            first_frequence; 
 
-    
     float32_t                       test;
     float32_t                       test1;
     float32_t                       test2;
-    float                           max_currents[3];
-    lpf_t                           statorResEstFlt;/*!< Resistance estimation low-pass filter */
+
     motor_state_e                   motor_state;    /*!< Current motor state for the FSM. */
     error_reg_u                     motor_error;    /*!< Error messages */
     // PWM address register for FOC command

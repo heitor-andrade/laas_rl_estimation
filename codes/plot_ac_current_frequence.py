@@ -6,10 +6,11 @@ path = "./"
 filename = "current_ac.txt"
 times, vsupplys, ias, dcas, mean_currents, mean_tensions, frequences = get_data(filename, path)
 
+
+print(vsupplys[0])
+
 fig, ax = plt.subplots(2)
 ax[0].plot(times, ias, '.', label = "Ia [A]")
-# ax[0].plot(times, mean_currents, '.', label = "Mean Ia [A]")
-
 ax[0].set_title(f"Time X Current")
 ax[0].set_xlabel("Time [s]")
 ax[0].set_ylabel("Current [A]")
@@ -17,15 +18,9 @@ ax[0].grid()
 ax[0].legend()
 
 
-# # ax[1].plot(times, frequences, '.', label = "Frequence [Hz]")
 ax[1].plot(frequences, ias, '.', label = "Frequence [Hz]")
 ax[1].legend()
 plt.show()
-
-# print("impedance: ", impedance)
-# print("reactance: ", reactance)
-# print("inductance_line: ", inductance_line)
-# print("inductance_phase: ", inductance_phase)
 
 # filter f = 0
 while frequences[0] == 0:
@@ -95,7 +90,9 @@ current_dc = U/R
 gain_currents_theorical = [current/current_dc for current in currents_ac]
 
 # Compute Bode with inductance found in code
-INDUCTANCE_CODE = 210e-6
+INDUCTANCE_CODE = 105e-6
+R = 0.369
+current_dc = U/R
 Zs = [compute_impedance(R, f, INDUCTANCE_CODE) for f in fs]
 currents_ac = [U/Z for Z in Zs]
 gain_currents_code = [current/current_dc for current in currents_ac]

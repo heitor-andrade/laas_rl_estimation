@@ -31,7 +31,7 @@ class SPIuDriver:
     #Initialise SPI
     self.ctrl = SpiController()
     #self.ctrl.configure('ftdi://ftdi:232h:bus:device/1')
-    self.ctrl.configure('ftdi://ftdi:232h:01:03/1') 
+    self.ctrl.configure('ftdi://ftdi:232h:01:07/1') 
     self.spi = self.ctrl.get_port(0, mode=0, freq=8000000)
 
     # Allocate all variables
@@ -150,9 +150,9 @@ class SPIuDriver:
       self.position1 = data[3] / (1<<24) * 2.0 * pi + self.offset1
 
 
-      self.velocity0 = data[4] / (1<<24)
-      self.velocity1 = data[5] # / (1<<11)
-      self.current0 = data[6]  / (1<<11)
+      self.velocity0 = data[4] / (1<<11)
+      self.velocity1 = data[5] / (1<<11)
+      self.current0 = data[6]  / (1<<24)
       self.current1 = data[7]  / (1<<11)
       self.tension0 = data[8]  / (1<<11)
       self.tension1 = data[9]  # / (1<<11)

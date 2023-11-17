@@ -1053,6 +1053,19 @@
  */
 
 /***********************************************************************
+ * RL ESTIMATION DEFINES
+ ***********************************************************************/
+
+// statorResEst variables
+#define INF_CURRENT_R_ESTIMATION    6
+#define SUP_CURRENT_R_ESTIMATION    7
+
+// statorIndEst variables
+#define OFFSET_L_ESTIMATION         0.06f
+#define AMPLITUDE_L_ESTIMATION      0.01f
+
+
+/***********************************************************************
  * MOTORS DEFINES
  ***********************************************************************/
 /*** Motor 1 constants ***/

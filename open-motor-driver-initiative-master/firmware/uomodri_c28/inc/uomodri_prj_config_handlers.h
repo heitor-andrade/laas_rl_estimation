@@ -393,7 +393,6 @@ static foc_t motor_foc[] =
   .pdPosVel.derivative                      = 0.0f,
   .pdPosVel.p_ff                            = (float32_t *)(&motor_foc[MOTOR_1].motor_cmd.iqff),
   .pdPosVel.p_sat                           = (float32_t *)(&motor_foc[MOTOR_1].motor_cmd.iSat),
-  .test                                     = 0.0f,
   //--- FOC - Q-axis resistance estimation ------------------------------------
   .resEst                                   = 1.0f,
   //--- Resistance estimation low-pass filter ---------------------------------
@@ -570,7 +569,6 @@ static foc_t motor_foc[] =
 //  .pdPosVel.ff                          = 0.0f,
 //  .pdPosVel.sat                         = 0.0f,
 //  .pdPosVel.out                            = 0.0f,
-  .test                                     = 0.0f,
   //--- FOC - Q-axis resistance estimation ------------------------------------
   .resEst                                   = 0.0f,
   //--- Resistance estimation low-pass filter ---------------------------------
@@ -582,6 +580,58 @@ static foc_t motor_foc[] =
   //--- Anti-coagging structure -----------------------------------------------
   //acog;
  },
+};
+
+static estimator_rl motor_rle[] =
+{
+  {
+    //--- Resistance estimation variables -------------------------------------
+    .statorResEst                         = 0,
+    .inf_dtc                              = 0,
+    .inf_vbus                             = 0,
+    .sup_dtc                              = 0,
+    .sup_vbus                             = 0,
+    .dtc_initialize                       = true,
+    .comp_resistance                      = true,
+    
+    //--- Inductance estimation variables -------------------------------------
+    .statorIndEst                         = 0,
+    .inf_current                          = 10,
+    .sup_current                          = 0,
+    .current_flt                          = 0,
+    .amplitude                            = 0,
+    .frequence                            = 100,
+    .frequence_ressonance                 = 0,
+    .A0                                   = 0,
+    .gain_current                         = 1,
+    .frequence_iteration                  = 0,
+    .initialize_current_flt               = true, 
+    .first_frequence                      = true, 
+  },
+  {
+    //--- Resistance estimation variables -------------------------------------
+    .statorResEst                         = 0,
+    .inf_dtc                              = 0,
+    .inf_vbus                             = 0,
+    .sup_dtc                              = 0,
+    .sup_vbus                             = 0,
+    .dtc_initialize                       = true,
+    .comp_resistance                      = true,
+    
+    //--- Inductance estimation variables -------------------------------------
+    .statorIndEst                         = 0,
+    .inf_current                          = 10,
+    .sup_current                          = 0,
+    .current_flt                          = 0,
+    .amplitude                            = 0,
+    .frequence                            = 100,
+    .frequence_ressonance                 = 0,
+    .A0                                   = 0,
+    .gain_current                         = 1,
+    .frequence_iteration                  = 0,
+    .initialize_current_flt               = true, 
+    .first_frequence                      = true, 
+  },
 };
 
 /** @var    MOTOR_STRUCT    motor[]
@@ -601,38 +651,31 @@ static motor_t motor[2] =
   .p_motorHalCfg    = &hal_motor_cfg[MOTOR_1],
   .p_motorDRV       = &drv_cfg[MOTOR_1],
   .p_motorFOC       = &motor_foc[MOTOR_1],
+  .p_motorRLE       = &motor_rle[MOTOR_1],
   //--- FSM motor initial state -----------------------------------------------
   .motor_state      = MOTOR_STATE_INIT,
   //--- Error message ---------------------------------------------------------
   .motor_error.all  = 0,
   .clCycleNb        = 0,
   .itCnt            = 0,
-  .statorResEst     = 0,
-  .comp_resistance  = true,
-  .dtc_initialized  = false,
-  .max_currents[0]  = -100,
-  .max_currents[1]  = -100,
-  .max_currents[2]  = -100,
-  .statorIndEst     = 0,
   .itDone           = false,
   .p_motorChAReg    = (volatile uint16_t *)(MOTOR1_PWM1_CMD_ADDR),
   .p_motorChBReg    = (volatile uint16_t *)(MOTOR1_PWM2_CMD_ADDR),
   .p_motorChCReg    = (volatile uint16_t *)(MOTOR1_PWM3_CMD_ADDR),
  },
  {
-  //--- MOTOR_1 ---------------------------------------------------------------
+  //--- MOTOR_2 ---------------------------------------------------------------
   .motor_id         = MOTOR_2,
   .p_motorHalCfg    = &hal_motor_cfg[MOTOR_2],
   .p_motorDRV       = &drv_cfg[MOTOR_2],
   .p_motorFOC       = &motor_foc[MOTOR_2],
+  .p_motorRLE       = &motor_rle[MOTOR_2],
   //--- FSM motor initial state -----------------------------------------------
   .motor_state      = MOTOR_STATE_INIT,
   //--- Error message ---------------------------------------------------------
   .motor_error.all  = 0,
   .clCycleNb        = 0,
   .itCnt            = 0,
-  .statorResEst     = 0,
-  .statorIndEst     = 0,
   .itDone           = false,
   .p_motorChAReg    = (volatile uint16_t *)(MOTOR2_PWM1_CMD_ADDR),
   .p_motorChBReg    = (volatile uint16_t *)(MOTOR2_PWM2_CMD_ADDR),

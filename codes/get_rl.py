@@ -17,42 +17,32 @@ t           = time.perf_counter()
 init_time   = time.time()
 
 count_print   = 0
-DTC_VARIATION = 0.01
-
-LIMIT_CURRENT = 10
 ia = ud.current0
-time_dtc = time.time() - init_time
 
-ud.refVelocity0 = 0.04 # duty cicle iniciale 
-
-
-while ia < LIMIT_CURRENT:
+while ia < 10:
 
 
     now = time.time() - init_time
-    dtc = ud.velocity0
-    ia = ud.current0
-    vbus = ud.supply0
+    resis = ud.velocity0
+    inductance = ud.current0
 
     count_print += 1
     if count_print == 10:
         print(
-                "dtc: ", round(dtc, 3),
-                "vbus", round(vbus, 1),
-                "ia: ", round(ia, 3),
-                now
+                "resis: ", round(resis, 3),
+                "inductance: ", inductance,
+                round(now, 1)
                 )
         count_print = 0        
 
-    # if now - time_dtc > 1:
-    #     break
-        # time_dtc = now
-        # ud.refVelocity0 += DTC_VARIATION
-
+    if now > 2:
+        break
 
     ud.transfer()
     t += dt
     while(time.perf_counter()-t<dt):
         pass
+
+
 
 ud.stop() # Terminate
