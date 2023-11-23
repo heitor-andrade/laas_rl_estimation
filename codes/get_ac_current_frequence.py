@@ -21,7 +21,7 @@ init_time   = time.time()
 
 count_print = 0
 
-f_init, f_end = 100, 5000
+f_init, f_end = 1, 1000
 set_frequences = list(np.logspace(np.log10(f_init), np.log10(f_end), 200))
 index_freq = 0
 set_frequences = [0] + set_frequences
@@ -35,16 +35,16 @@ while index_freq < len(set_frequences):
     now = time.time() - init_time
     
     # Set frequence 
-    # if now - time_freq > 0.1:
-    #     freq = set_frequences[index_freq]
-    #     time_freq = now
-    #     index_freq += 1
+    if now - time_freq > 0.1:
+        freq = set_frequences[index_freq]
+        time_freq = now
+        index_freq += 1
 
 
     # Define Data to send
     ud.refCurrent0 = 0.06           # offset
     ud.refVelocity0 = 0.01         # amplitude
-    ud.kp0 = 2000                   # frequence
+    # ud.kp0 = 2000                   # frequence
     ud.kd0 = 0.001                  # alpha_flt
 
     # Store data after 10ms that the frequence changed
@@ -53,7 +53,6 @@ while index_freq < len(set_frequences):
         vsupplys.append(round(ud.supply0, 2))
         ias.append(round(ud.velocity0, 3))
         dcas.append(round(ud.velocity1, 3))
-
         mean_currents.append(round(ud.current0, 3))
         mean_tensions.append(round(ud.tension0, 3))
         frequences.append(round(ud.tension1, 1))
@@ -99,22 +98,22 @@ while index_freq < len(set_frequences):
 
 ud.stop() # Terminate
 
-# # Save data in file
-# f = open("current_ac.txt", "w")
-# f.write("Time, Vsupply, ia, dca, current, tension, frequence\n")
+# Save data in file
+f = open("current_ac_frequence_1.txt", "w")
+f.write("Time, Vsupply, ia, dca, current, tension, frequence\n")
 
-# for i in range(len(times)):
-#     f.write(str(times[i]) + ", " 
-#             + str(vsupplys[i]) + ", "
-#             + str(ias[i]) + ", " 
-#             + str(dcas[i]) + ", " 
-#             + str(mean_currents[i]) + ", "
-#             + str(mean_tensions[i]) + ", " 
-#             + str(frequences[i])
-#             + "\n")
-# f.close()
+for i in range(len(times)):
+    f.write(str(times[i]) + ", " 
+            + str(vsupplys[i]) + ", "
+            + str(ias[i]) + ", " 
+            + str(dcas[i]) + ", " 
+            + str(mean_currents[i]) + ", "
+            + str(mean_tensions[i]) + ", " 
+            + str(frequences[i])
+            + "\n")
+f.close()
 
-# sys.exit()
+sys.exit()
 
 
 # f,    L line,     Lphase,     ac current,     dc current

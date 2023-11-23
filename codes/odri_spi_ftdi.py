@@ -31,7 +31,7 @@ class SPIuDriver:
     #Initialise SPI
     self.ctrl = SpiController()
     #self.ctrl.configure('ftdi://ftdi:232h:bus:device/1')
-    self.ctrl.configure('ftdi://ftdi:232h:01:07/1') 
+    self.ctrl.configure('ftdi://ftdi:232h:01:03/1') 
     self.spi = self.ctrl.get_port(0, mode=0, freq=8000000)
 
     # Allocate all variables

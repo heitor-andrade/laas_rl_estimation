@@ -28,7 +28,7 @@ bool_t COM_msgExtract(mst2slv_msg_t* p_msg,  cmd_t* p_cmd_m1,  cmd_t* p_cmd_m2)
         p_cmd_m1->kpCoeff               = (int)(p_msg->kpCoeff[MOTOR_1]);
         p_cmd_m1->velRef                = (float32_t)(p_msg->velocity[MOTOR_1]  * CURRENT_LSB);
         p_cmd_m1->iqff                  = (float32_t)(p_msg->current[MOTOR_1]   * CURRENT_LSB);
-        p_cmd_m1->kdCoeff               = (float32_t)(p_msg->kdCoeff[MOTOR_1]   * CURRENT_LSB);
+        p_cmd_m1->kdCoeff               = (float32_t)(p_msg->kdCoeff[MOTOR_1]   * POSITION_LSB);
         p_cmd_m1->timeoutRef            = (uint16_t)p_msg->mode.bit.TIMEOUT;
         
         
@@ -211,9 +211,9 @@ void COM_msgCreate(motor_t* p_motor_m1, motor_t* p_motor_m2, slv2mst_msg_t* p_ms
     p_msg->adcSamples[MOTOR_1]          = (uint16_t)(p_foc->motor_acq.vbus      / SUPPLY_LSB);
 
 
-    p_msg->velocity[MOTOR_1]            = (int16_t)(p_motor_m1->test            / CURRENT_LSB);
-    p_msg->current[MOTOR_1]             = (int16_t)(p_motor_m1->test1           / POSITION_LSB);
-    p_msg->velocity[MOTOR_2]            = (int16_t)(p_motor_m1->test2           / CURRENT_LSB);
+    p_msg->velocity[MOTOR_1]            = (int16_t)(p_motor_m1->test            / CURRENT_LSB); // resistance
+    p_msg->current[MOTOR_1]             = (int16_t)(p_motor_m1->test1           / POSITION_LSB);// inductance
+    p_msg->velocity[MOTOR_2]            = (int16_t)(p_motor_m1->test2);
 
     p_msg->status.bit.SE                = p_cmd_reg->systemEnable;  // System enabled
     p_msg->status.bit.STATUS_RSV1       = 0;

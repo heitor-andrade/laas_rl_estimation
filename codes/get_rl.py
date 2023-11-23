@@ -19,24 +19,24 @@ init_time   = time.time()
 count_print   = 0
 ia = ud.current0
 
-while ia < 10:
+while True:
 
 
     now = time.time() - init_time
-    resis = ud.velocity0
-    inductance = ud.current0
+    # resis = ud.velocity0
+    # inductance = ud.current0
 
     count_print += 1
     if count_print == 10:
         print(
-                "resis: ", round(resis, 3),
-                "inductance: ", inductance,
+                "resis: ", round(resis * 2, 3),
+                "inductance: ", inductance * 2,
                 round(now, 1)
                 )
         count_print = 0        
 
-    if now > 2:
-        break
+    # if now > 2:
+    #     break
 
     ud.transfer()
     t += dt

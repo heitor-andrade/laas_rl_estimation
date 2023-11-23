@@ -600,62 +600,21 @@ typedef struct __bit_command_mem_t__
 typedef struct __attribute__((__packed__)) __dbg_uart_msg_t__
 {
     uint8_t         header[2];
-//    uint32_t        counter;
-//    uint8_t         msgtype;
-
-    float_t         ia;
-    float_t         ib;
-    float_t         ic;
-//    float_t         vbus;
-//    float_t         ialpha;
-//    float_t         ibeta;
+    uint32_t        counter;
+    float_t         idref;
     float_t         id;
-    float_t         iq;
-    float_t         iqref;
-    float_t         ud;
-    float_t         uq;
-//    float_t         ualpha;
-//    float_t         ubeta;
-//    float_t         ua;
-//    float_t         ub;
-//    float_t         uc;
-    float_t         pos;
-//    float_t         posref;
-    float_t         vel;
-//    float_t         velref;
-//    uint32_t        itcnt;
+    float_t         resistor;
+    float_t         inductor;
     uint8_t         crc;
-//    uint8_t         padding;
 } dbg_uart_msg_t;
 
 typedef struct __attribute__((__packed__)) __dbg_uart_addr_t__
 {
-    float_t*        p_ia;
-    float_t*        p_ib;
-    float_t*        p_ic;
-    float_t*        p_vbus;
-    float_t*        p_ialpha;
-    float_t*        p_ibeta;
+    float_t*        p_itCnt;
+    float_t*        p_idref;
     float_t*        p_id;
-    float_t*        p_iq;
-    float_t*        p_iqref;
-    float_t*        p_ud;
-    float_t*        p_uq;
-    float_t*        p_ualpha;
-    float_t*        p_ubeta;
-    float_t*        p_ua;
-    float_t*        p_ub;
-    float_t*        p_uc;
-    float_t*        p_pos;
-    float_t*        p_posref;
-    float_t*        p_vel;
-    float_t*        p_velref;
-//    float_t*        p_pd_kp;
-//    float_t*        p_pd_kd;
-//    float_t*        p_iqff;
-//    float_t*        p_isat;
-//    float_t*        p_status;
-//    uint64_t*       p_itcnt;
+    float_t*        p_res;
+    float_t*        p_induc;
 } dbg_uart_addr_t;
 
 typedef struct __com_dbg_tx_msg_t__

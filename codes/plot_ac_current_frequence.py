@@ -6,11 +6,16 @@ path = "./"
 filename = "current_ac.txt"
 times, vsupplys, ias, dcas, mean_currents, mean_tensions, frequences = get_data(filename, path)
 
+_times, _frequences, _ias = [], [], []
 
-print(vsupplys[0])
+for i in range(len(times)):
+    if frequences[i] == 106:
+        _times.append(times[i])
+        _frequences.append(frequences[i])
+        _ias.append(ias[i])
 
 fig, ax = plt.subplots(2)
-ax[0].plot(times, ias, '.', label = "Ia [A]")
+ax[0].plot(_times, _ias, '.',label = "Ia [A]")
 ax[0].set_title(f"Time X Current")
 ax[0].set_xlabel("Time [s]")
 ax[0].set_ylabel("Current [A]")
@@ -18,7 +23,10 @@ ax[0].grid()
 ax[0].legend()
 
 
-ax[1].plot(frequences, ias, '.', label = "Frequence [Hz]")
+ax[1].plot(_times, _frequences)
+ax[1].set_title(f"Time X Frequence")
+ax[1].set_xlabel("Time [s]")
+ax[1].set_ylabel("Frequence [Hz]")
 ax[1].legend()
 plt.show()
 
@@ -62,7 +70,7 @@ fs.sort()
 
 
 # Compute inductance with motor data
-R = 0.53
+R = 0.242
 F_DESIRED = 500
 
 for i in range(len(fs)):
@@ -89,9 +97,10 @@ currents_ac = [U/Z for Z in Zs]
 current_dc = U/R
 gain_currents_theorical = [current/current_dc for current in currents_ac]
 
+
 # Compute Bode with inductance found in code
-INDUCTANCE_CODE = 105e-6
-R = 0.369
+INDUCTANCE_CODE = 70e-6
+R = 0.242
 current_dc = U/R
 Zs = [compute_impedance(R, f, INDUCTANCE_CODE) for f in fs]
 currents_ac = [U/Z for Z in Zs]
@@ -116,5 +125,5 @@ for i in range(len(fs)):
     inductance = reactance / (2 * np.pi * fs[i])
     inductances.append( inductance )
 
-plt.plot(fs, inductances)
-plt.show()
+# plt.plot(fs, inductances)
+# plt.show()

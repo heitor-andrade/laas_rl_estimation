@@ -33,11 +33,11 @@
 // Cores activation ENABLE/DISABLE
 #define CPU1_CORE_ENABLE                        (1)
 #define CPU2_CORE_ENABLE                        (0)
-#define CM_CORE_ENABLE                          (0)
+#define CM_CORE_ENABLE                          (1)
 #define CLA_CORE_ENABLE                         (0)
 // CM peripherals ENABLE/DISABLE
 #define USB_BUS_ENABLE                          (0)
-#define UART_BUS_ENABLE                         (0)
+#define UART_BUS_ENABLE                         (1)
 // Communication peripherals ENABLE/DISABLE
 #define CAN_BUS_ENABLE                          (0)
 #define RS485_BUS_ENABLE                        (0)
@@ -1057,13 +1057,16 @@
  ***********************************************************************/
 
 // statorResEst variables
-#define INF_CURRENT_R_ESTIMATION    6
-#define SUP_CURRENT_R_ESTIMATION    7
+#define COMPUTE_RL_ENABLE           1       // Enables estimation of RL parameters and updating of current control constants
+#define INF_CURRENT_R_ESTIMATION    4       // Inferior point of the current used to calculate the resistance [A]
+#define SUP_CURRENT_R_ESTIMATION    5       // Superior current point used to calculate resistance [A]
+#define CURRENT_SAMPLES_NUMBER      20      // Number of points used to calculate the average current
+#define CENTER_DTC_RL               0.5f    // Initial duty cycle value of the 3 phases. Used to avoid non-linearity at low duty cycles
 
 // statorIndEst variables
-#define OFFSET_L_ESTIMATION         0.06f
-#define AMPLITUDE_L_ESTIMATION      0.01f
-
+#define OFFSET_L_ESTIMATION         0.06f   // Offset of the sinusoidal signal used to estimate inductance
+#define AMPLITUDE_L_ESTIMATION      0.01f   // Amplitude of the sinusoidal signal used to estimate inductance. 
+// Signal applied to inductance estimation: (CENTER_DTC_RL + OFFSET_L_ESTIMATION) + AMPLITUDE_L_ESTIMATION*sin(wt)
 
 /***********************************************************************
  * MOTORS DEFINES
@@ -1073,7 +1076,7 @@
 #define MOTOR1_KE                               (FM_SQRT3 / (MOTOR1_KV * FM_RPM2RADPS))   //1.0 / (MOTOR1_KV * FM_RPM2RAD * MOTOR1_POLES_PAIRS) // Motor back EMF constant (V/rad/s)
 #define MOTOR1_KI                               (0.1f)      // Motor torque constant (N.m/A)
 #define MOTOR1_RS                               (0.53f)     // Stator resistance (ohm)
-#define MOTOR1_LS                               (153e-6f)   // Stator d-axis inductance (H)
+#define MOTOR1_LS                               (210e-6f)   // Stator d-axis inductance (H)
 #define MOTOR1_POLES_PAIRS                      (12.0f)     // Number of poles
 #define MOTOR1_CURRENT_CUTOFF_FREQ              (1000.0f)   // Current loop bandwidth (Hz)
 #define MOTOR1_CURRENT_TIME_CONST               (2.0f * M_PI * MOTOR1_CURRENT_CUTOFF_FREQ * PWM_PERIOD)

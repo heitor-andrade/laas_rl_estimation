@@ -82,14 +82,18 @@ typedef union __uint16_u__
 
 typedef struct __estimator_rl__
 {
+    // Resistance variables
     float32_t                       statorResEst;               /*!< Stator resistance estimation. [Ohm] */
     float32_t                       inf_dtc;                    /*!< Minimum duty-cicle utilised to resistance estimation [no measurement unit] */
     float32_t                       inf_vbus;                   /*!< Voltage at source when min_dtc is assigned [V] */
     float32_t                       sup_dtc;                    /*!< Maximum duty-cicle utilised to resistance estimation [no measurement unit] */
     float32_t                       sup_vbus;                   /*!< Voltage at source when max_dtc is assigned [V] */
-    bool                            dtc_initialize;            /*!< Indicates whether the duty cycle should be initialized */
-    bool                            comp_resistance;            /*!< Indicates whether the resistance should be computed */
+    int                             counter_current;            /*!< Counter for calculating the average current */
+    bool                            computing_mean_inf;         /*!< Counter for calculating the average current */
+    bool                            computing_mean_sup;         /*!< Counter for calculating the average current */
+    bool                            dtc_initialize;             /*!< Indicates whether the duty cycle should be initialized */
     
+    // Inductance variables
     float32_t                       statorIndEst;               /*!< Q-axis inductance estimation. [Henry] */
     float32_t                       current_flt;                /*!< Filtered current */
     float32_t                       amplitude;                  /*!< Current amplitude [A] */
@@ -98,7 +102,9 @@ typedef struct __estimator_rl__
     float32_t                       A0;                         /*!< First amplitude calculated */
     float32_t                       gain_current;               /*!< Gain in current amplitude compared to A0 */
     float32_t                       frequence;                  /*!< Frequency applied to the voltage [Hz] */
-    float32_t                       frequence_ressonance;       /*!< First frequency that causes a gain of less than 1/sqrt(2). Frequency used directly in the inductance calculation. [Hz]*/
+    int                             counter_gain;               /*!< Counter for calculating the average gain current */
+    float                           gain_current_mean;          /*!< Average of CURRENT_SAMPLES_NUMBER numbers of current measurements for the same applied frequency */
+    bool                            computing_mean_gain;        /*!< Indicates whether the average current gain is being computed */
     uint32_t                        frequence_iteration;        /*!< Indicates the iteration of the code in which the frequency value was changed */
     bool                            initialize_current_flt;     /*!< Indicates whether the current filter should be initialized */
     bool                            first_frequence;            /*!< Indicates whether the current frequency is the first one applied */

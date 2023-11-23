@@ -86,8 +86,6 @@ inline bool_t MOT_runControl(motor_t* p_motor)
     p_motor->motor_error.bit.enc_mismatch   = p_enc->indexDetect && p_enc->indexError;
     p_motor->motor_state        = (p_motor->motor_error.all)        ? (MOTOR_STATE_ERROR)       : (p_motor->motor_state);
 #endif
-    bool compute_rl = true;
-
     switch(p_motor->motor_state)
     {
     case MOTOR_STATE_INIT:
@@ -95,74 +93,72 @@ inline bool_t MOT_runControl(motor_t* p_motor)
         p_motor->itCnt          = 0U;
         p_foc->idRef            = 0.0f;
         p_foc->iqRef            = 0.0f;
-        p_motor->motor_state    = (en_bit.motorEnable)              ? (MOTOR_STATE_ALIGN_UP)    : (MOTOR_STATE_INIT);
-        p_motor->motor_state    = (en_bit.systemEnable)             ? (p_motor->motor_state)    : (MOTOR_STATE_INIT);
+        p_motor->motor_state    = (en_bit.motorEnable)                      ? (MOTOR_STATE_ALIGN_UP)    : (MOTOR_STATE_INIT);
+        p_motor->motor_state    = (en_bit.motorEnable & COMPUTE_RL_ENABLE)  ? (MOTOR_STATE_COMPUTE_RL)  : (p_motor->motor_state);
+        p_motor->motor_state    = (en_bit.systemEnable)                     ? (p_motor->motor_state)    : (MOTOR_STATE_INIT);
         ENC_resetPeriph(p_enc);
         // FOC_resetStruct(p_foc);
         MOT_stopCommand(p_motor);
         break;
 
-    case MOTOR_STATE_ALIGN_UP:
-        p_motor->itCnt          = 0U;
-        p_foc->idRef           += (id == MOTOR_1)                   ? (MOTOR1_CURRENT_ALIGN_INC): (MOTOR2_CURRENT_ALIGN_INC); // Increment for current alignment procedure
-        p_foc->iqRef            = 0.0f;
-        enc_theta[id]          -= (id == MOTOR_1)                   ? (MOTOR1_THETA_ALIGN_DEC)  : (MOTOR2_THETA_ALIGN_DEC); // Decrement for position alignment procedure
-        p_motor->motor_state    = (p_foc->idRef < p_foc->iAlignMax) ? (MOTOR_STATE_ALIGN_UP)    : (MOTOR_STATE_ALIGN_FIX);
-        p_motor->motor_state    = (en_bit.motorEnable)              ? (p_motor->motor_state)    : (MOTOR_STATE_INIT);
-        p_motor->motor_state    = (en_bit.systemEnable)             ? (p_motor->motor_state)    : (MOTOR_STATE_INIT);
-        (p_motor->motor_state  != MOTOR_STATE_ALIGN_UP)             ? (ENC_resetStruct(p_enc))  : (p_enc->thetaElec = enc_theta[id]);
-        FOC_runControl(p_foc);
-        MOT_runCommand(p_motor, p_foc->dtc_u, p_foc->dtc_v, p_foc->dtc_w);
-
-        break;
-
-    case MOTOR_STATE_ALIGN_FIX:
-        p_motor->itCnt         += 1U; // wait 2s
-        p_foc->idRef            = p_foc->iAlignMax; // Maintain alignment current
-        p_foc->iqRef            = 0.0f;
-        p_motor->motor_state    = (p_motor->itCnt < (2 * PWM_FREQ))                             ? (MOTOR_STATE_ALIGN_FIX)   : (MOTOR_STATE_READY);
-        p_motor->motor_state    = ((p_motor->motor_state == MOTOR_STATE_READY) & compute_rl)    ? (MOTOR_STATE_COMPUTE_RL)  : (p_motor->motor_state);
-        p_motor->motor_state    = (en_bit.motorEnable)                                          ? (p_motor->motor_state)    : (MOTOR_STATE_INIT);
-        p_motor->motor_state    = (en_bit.systemEnable)                                         ? (p_motor->motor_state)    : (MOTOR_STATE_INIT);
-        ENC_resetPeriph(p_enc);
-        ENC_resetStruct(p_enc);
-        FOC_runControl(p_foc);
-        MOT_runCommand(p_motor, p_foc->dtc_u, p_foc->dtc_v, p_foc->dtc_w);
-
-        break;
     case MOTOR_STATE_COMPUTE_RL:
-        p_motor->motor_state    = (p_rle->statorIndEst == 0)        ? (MOTOR_STATE_COMPUTE_RL)  : (MOTOR_STATE_READY);
+        p_motor->motor_state    = (p_rle->statorIndEst == 0)        ? (MOTOR_STATE_COMPUTE_RL)  : (MOTOR_STATE_ALIGN_UP);
         p_motor->motor_state    = (en_bit.motorEnable)              ? (p_motor->motor_state)    : (MOTOR_STATE_INIT);
         p_motor->motor_state    = (en_bit.systemEnable)             ? (p_motor->motor_state)    : (MOTOR_STATE_INIT);
         
         if( (p_rle->dtc_initialize) ){      
-            // Initialize duty cicle to 0                    
-            p_foc->dtc_u = 0;
-            p_motor->itCnt         += 1U;
-            if(p_motor->itCnt  % 100)
-                p_rle->dtc_initialize = false;
+            // Initialize duty cicle to 0.5                 
+            p_foc->dtc_u = CENTER_DTC_RL;
+            p_foc->dtc_v = CENTER_DTC_RL;
+            p_foc->dtc_w = CENTER_DTC_RL;
+            p_motor->itCnt = 0;
+            p_rle->dtc_initialize = false;
         }
         else if (p_rle->statorResEst == 0){                     
             // Compute resistance estimation
-
-            if (p_rle->inf_dtc == 0 || p_rle->sup_dtc == 0){
-                // Get current and duty cicles infimuns and maximuns
+            if (p_rle->inf_current == 0 || p_rle->sup_current == 0 || p_rle->computing_mean_sup){
+                // Get inferior and supperior current and duty cicles 
                 float current = p_foc->motor_acq.ia;
 
                 if (current >= INF_CURRENT_R_ESTIMATION & p_rle->inf_dtc == 0){
+                    p_rle->computing_mean_inf = true;
                     p_rle->inf_dtc = p_foc->dtc_u;
-                    p_rle->inf_current = current;
                     p_rle->inf_vbus = p_foc->motor_acq.vbus;
                     }
-                if (current >= SUP_CURRENT_R_ESTIMATION & p_rle->sup_dtc == 0){
+                else if (current >= SUP_CURRENT_R_ESTIMATION & p_rle->sup_dtc == 0){
+                    p_rle->computing_mean_sup = true;
                     p_rle->sup_dtc = p_foc->dtc_u;
-                    p_rle->sup_current = current;
                     p_rle->sup_vbus = p_foc->motor_acq.vbus;
                     }
 
-                p_motor->itCnt         += 1U;
-                if ((p_motor->itCnt % 100 == 0))
-                    p_foc->dtc_u += 0.001;
+                if (p_rle->computing_mean_inf){
+                    // Compute mean inferior current
+                    if (p_rle->counter_current < CURRENT_SAMPLES_NUMBER){
+                        p_rle->counter_current++;
+                        p_rle->inf_current += current;
+                    }else{
+                        p_rle->inf_current /= CURRENT_SAMPLES_NUMBER;
+                        p_rle->computing_mean_inf = false;
+                        p_rle->counter_current = 0;
+                    }
+                }
+                else if(p_rle->computing_mean_sup){
+                    // Compute mean superior current
+                    if (p_rle->counter_current < CURRENT_SAMPLES_NUMBER){
+                        p_rle->counter_current++;
+                        p_rle->sup_current += current;
+                    }else{
+                        p_rle->computing_mean_sup = false;
+                        p_rle->counter_current = 0;
+                        p_rle->sup_current /= CURRENT_SAMPLES_NUMBER;
+                    }
+                }
+                else{
+                    // Increment dutycicle while not calculating means
+                    p_motor->itCnt         += 1U;
+                    if ((p_motor->itCnt % 100 == 0))
+                        p_foc->dtc_u += 0.001;
+                }
             }
             else{
                 // Compute resistance 
@@ -210,69 +206,144 @@ inline bool_t MOT_runControl(motor_t* p_motor)
                     p_rle->first_frequence = false;
                 }
                 else{
-                    // Compute current gain
-                    p_rle->gain_current = amplitude / p_rle->A0;
                     
-                    if(p_rle->gain_current <= FM_1DIVSQRT2){
-                        // Get ressonance frequence
-                        p_rle->frequence_ressonance = p_rle->frequence;
-                    }
-                }
+                    if (!p_rle->computing_mean_gain)// Increase frequence
+                        p_rle->frequence += 50;
 
-                // Increase frequence and reset variable
-                p_rle->frequence += 50;
+                    
+                    p_rle->gain_current = amplitude / p_rle->A0; // Compute current gain
+                    if(p_rle->gain_current <= FM_1DIVSQRT2 & !p_rle->computing_mean_gain) // Start computing mean gain
+                        p_rle->computing_mean_gain = true;
+
+
+                    if(p_rle->computing_mean_gain){
+                        p_rle->counter_gain++;
+                        p_rle->gain_current_mean += p_rle->gain_current;
+
+                        if (p_rle->counter_gain == CURRENT_SAMPLES_NUMBER){
+                            // Compute mean current gain
+                            p_rle->gain_current_mean /= CURRENT_SAMPLES_NUMBER;
+
+                            // Compute inductance estimation
+                            float impedance_ac = p_rle->statorResEst/p_rle->gain_current_mean;      // Impedance gain is the invese of current_gain. Z = U/I                
+                            float reactance = __sqrtf(impedance_ac*impedance_ac - p_rle->statorResEst*p_rle->statorResEst);
+                            p_rle->statorIndEst = reactance / (2 * M_PI * p_rle->frequence);
+                             
+                            // Changes values for the motor phase reference
+                            p_rle->statorIndEst = p_rle->statorIndEst * 2 / 3;
+                            p_rle->statorResEst = p_rle->statorResEst * 2 / 3;
+
+                            // Update current control constants
+                            p_foc->piIq.kp = (p_rle->statorIndEst * 2.0f * M_PI * MOTOR1_CURRENT_CUTOFF_FREQ);
+                            p_foc->piIq.ki = (p_rle->statorResEst * 2.0f * M_PI * MOTOR1_CURRENT_CUTOFF_FREQ);
+                            p_foc->piId.kp = (p_rle->statorIndEst * 2.0f * M_PI * MOTOR1_CURRENT_CUTOFF_FREQ);
+                            p_foc->piId.ki = (p_rle->statorResEst * 2.0f * M_PI * MOTOR1_CURRENT_CUTOFF_FREQ);
+
+                            p_motor->test  = p_rle->statorResEst;
+                            p_motor->test1 = p_rle->statorIndEst;
+                        }
+                    } 
+                }
+                // Reset variables
                 p_rle->inf_current = 10;
                 p_rle->sup_current = 0;
                 p_rle->frequence_iteration = p_motor->itCnt;
-
-                if (p_rle->frequence_ressonance != 0 & p_rle->statorIndEst == 0){
-                    // Compute inductance estimation
-                    float impedance_ac = p_rle->statorResEst/p_rle->gain_current;      // Impedance gain is the invese of current_gain. Z = U/I                
-                    float reactance = __sqrtf(impedance_ac*impedance_ac - p_rle->statorResEst*p_rle->statorResEst);
-                    p_rle->statorIndEst = reactance / (2 * M_PI * p_rle->frequence_ressonance);
-                    
-                    // Changes values for the motor phase reference
-                    p_rle->statorIndEst = p_rle->statorIndEst * 2 / 3;
-                    p_rle->statorResEst = p_rle->statorResEst * 2 / 3;
-                }  
             }
 
             // Apply sinusoidal voltage
-            p_foc->dtc_u = OFFSET_L_ESTIMATION + AMPLITUDE_L_ESTIMATION * __sin(p_rle->frequence * 2 * M_PI * p_motor->itCnt / 40000);
+            p_foc->dtc_u = (CENTER_DTC_RL + OFFSET_L_ESTIMATION) + AMPLITUDE_L_ESTIMATION * __sin(p_rle->frequence * 2 * M_PI * p_motor->itCnt / 40000);
         }
 
         if ((p_rle->statorIndEst != 0) & (p_rle->statorResEst != 0)){
+            // Reset structure after RL estimation
             ENC_resetPeriph(p_enc);
             ENC_resetStruct(p_enc);
             FOC_runControl(p_foc);
-            p_foc->dtc_u = 0;
         }
 
+        // Debug variables
         p_motor->test = p_rle->statorResEst;
         p_motor->test1 = p_rle->statorIndEst;
         p_motor->test2 = p_rle->frequence;
 
-        p_foc->dtc_v = 0;
-        p_foc->dtc_w = 0;
+        MOT_runCommand(p_motor, p_foc->dtc_u, p_foc->dtc_v, p_foc->dtc_w);
+
+        break;
+
+    case MOTOR_STATE_ALIGN_UP:
+        p_motor->itCnt          = 0U;
+        p_foc->idRef           += (id == MOTOR_1)                   ? (MOTOR1_CURRENT_ALIGN_INC): (MOTOR2_CURRENT_ALIGN_INC); // Increment for current alignment procedure
+        p_foc->iqRef            = 0.0f;
+        enc_theta[id]          -= (id == MOTOR_1)                   ? (MOTOR1_THETA_ALIGN_DEC)  : (MOTOR2_THETA_ALIGN_DEC); // Decrement for position alignment procedure
+        p_motor->motor_state    = (p_foc->idRef < p_foc->iAlignMax) ? (MOTOR_STATE_ALIGN_UP)    : (MOTOR_STATE_ALIGN_FIX);
+        p_motor->motor_state    = (en_bit.motorEnable)              ? (p_motor->motor_state)    : (MOTOR_STATE_INIT);
+        p_motor->motor_state    = (en_bit.systemEnable)             ? (p_motor->motor_state)    : (MOTOR_STATE_INIT);
+        (p_motor->motor_state  != MOTOR_STATE_ALIGN_UP)             ? (ENC_resetStruct(p_enc))  : (p_enc->thetaElec = enc_theta[id]);
+        FOC_runControl(p_foc);
+        MOT_runCommand(p_motor, p_foc->dtc_u, p_foc->dtc_v, p_foc->dtc_w);
+
+        break;
+
+    case MOTOR_STATE_ALIGN_FIX:
+        p_motor->itCnt         += 1U; // wait 2s
+        p_foc->idRef            = p_foc->iAlignMax; // Maintain alignment current
+        p_foc->iqRef            = 0.0f;
+        p_motor->motor_state    = (p_motor->itCnt < (2 * PWM_FREQ))                             ? (MOTOR_STATE_ALIGN_FIX)   : (MOTOR_STATE_READY);
+        p_motor->motor_state    = (en_bit.motorEnable)                                          ? (p_motor->motor_state)    : (MOTOR_STATE_INIT);
+        p_motor->motor_state    = (en_bit.systemEnable)                                         ? (p_motor->motor_state)    : (MOTOR_STATE_INIT);
+        ENC_resetPeriph(p_enc);
+        ENC_resetStruct(p_enc);
+        FOC_runControl(p_foc);
         MOT_runCommand(p_motor, p_foc->dtc_u, p_foc->dtc_v, p_foc->dtc_w);
 
         break;
 
     case MOTOR_STATE_READY:
         p_motor->itCnt         += 1U;
-        p_foc->idRef            = 0.0f;
+        // p_foc->idRef            = p_foc->motor_cmd.iqff;
+        p_foc->idRef            = 0;
         p_foc->iqRef            = FOC_runPD(&p_foc->pdPosVel);
+        p_foc->iqRef            = 0;
         p_motor->motor_state    = (en_bit.motorEnable)              ? (MOTOR_STATE_READY)       : (MOTOR_STATE_STOP);
         p_motor->motor_state    = (en_bit.systemEnable)             ? (p_motor->motor_state)    : (MOTOR_STATE_INIT);
         FOC_runControl(p_foc);
         MOT_runCommand(p_motor, p_foc->dtc_u, p_foc->dtc_v, p_foc->dtc_w);
 
-        // // TEST VBUS
-        // p_foc->dtc_u = p_foc->motor_cmd.velRef;
-        // p_motor->test = p_foc->dtc_u;
-        // p_motor->test1 = p_foc->motor_acq.ia;
-        // p_foc->dtc_v = 0;
-        // p_foc->dtc_w = 0;
+        // // // TIME PLOT
+        // // change constants
+        // float resistance = p_foc->motor_cmd.velRef;
+        // float inductance = p_foc->motor_cmd.kdCoeff;
+
+        // p_motor->test = resistance;
+        // p_motor->test1 = inductance;
+
+        // p_foc->piIq.kp = (inductance * 2.0f * M_PI * MOTOR1_CURRENT_CUTOFF_FREQ);
+        // p_foc->piIq.ki = (resistance * 2.0f * M_PI * MOTOR1_CURRENT_CUTOFF_FREQ);
+        // p_foc->piId.kp = (inductance * 2.0f * M_PI * MOTOR1_CURRENT_CUTOFF_FREQ);
+        // p_foc->piId.ki = (resistance * 2.0f * M_PI * MOTOR1_CURRENT_CUTOFF_FREQ);
+
+        // FOC_runControl(p_foc);
+        // MOT_runCommand(p_motor, p_foc->dtc_u, p_foc->dtc_v, p_foc->dtc_w);
+
+        // // // CONSTANTS TEST AND BODE PLOT
+        // // change constants
+        // float resistance = p_foc->motor_cmd.velRef;
+        // float inductance = p_foc->motor_cmd.kdCoeff;
+
+        // p_foc->piIq.kp = (inductance * 2.0f * M_PI * MOTOR1_CURRENT_CUTOFF_FREQ);
+        // p_foc->piIq.ki = (resistance * 2.0f * M_PI * MOTOR1_CURRENT_CUTOFF_FREQ);
+        // p_foc->piId.kp = (inductance * 2.0f * M_PI * MOTOR1_CURRENT_CUTOFF_FREQ);
+        // p_foc->piId.ki = (resistance * 2.0f * M_PI * MOTOR1_CURRENT_CUTOFF_FREQ);
+
+        // // set id reference
+        // float frequence = p_foc->motor_cmd.kpCoeff;
+        // p_foc->idRef = __sin(frequence * 2 * M_PI * p_motor->itCnt / 40000);
+
+        // // set variables to send
+        // p_motor->test = resistance;
+        // p_motor->test1 = frequence;
+
+        // FOC_runControl(p_foc);
         // MOT_runCommand(p_motor, p_foc->dtc_u, p_foc->dtc_v, p_foc->dtc_w);
 
         break;
