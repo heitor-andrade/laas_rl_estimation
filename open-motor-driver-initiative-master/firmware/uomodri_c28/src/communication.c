@@ -212,7 +212,7 @@ void COM_msgCreate(motor_t* p_motor_m1, motor_t* p_motor_m2, slv2mst_msg_t* p_ms
 
 
     p_msg->velocity[MOTOR_1]            = (int16_t)(p_motor_m1->test            / CURRENT_LSB); // resistance
-    p_msg->current[MOTOR_1]             = (int16_t)(p_motor_m1->test1           / POSITION_LSB);// inductance
+    p_msg->current[MOTOR_1]             = (int16_t)(p_motor_m1->test1           / CURRENT_LSB);// inductance
     p_msg->velocity[MOTOR_2]            = (int16_t)(p_motor_m1->test2);
 
     p_msg->status.bit.SE                = p_cmd_reg->systemEnable;  // System enabled

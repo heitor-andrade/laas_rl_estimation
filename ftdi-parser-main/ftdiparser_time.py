@@ -83,8 +83,8 @@ def parseData(rawData,
 # Example of use
 dataRaw = dump()
 
-data_names = ['time', 'id_ref', 'id', 'resis', 'induc']
-data_scales = [25e-6, 1.0, 1.0, 1.0, 1e+4]
+data_names = ['time', 'id_ref', 'id', 'resis', 'test']
+data_scales = [25e-6, 1.0, 1.0, 1.0, 1.0]
 data_format = "Iffff"
 
 data = parseData(dataRaw, data_names, data_format, data_scales)
@@ -100,14 +100,14 @@ plt.show()
 
 # save data
 # Save data in file
-f = open("current.txt", "w")
-f.write("Time, id, id_ref, resis, induc\n")
+f = open("time.txt", "w")
+f.write("Time, id, id_ref, resis, test\n")
 
 for i in range(len(data['time'])):
     f.write(str(data['time'][i]) + ", " 
             + str(data['id'][i]) + ", "
             + str(data['id_ref'][i]) + ", " 
             + str(data['resis'][i]) + ", " 
-            + str(data['induc'][i])
+            + str(data['test'][i])
             + "\n")
 f.close()

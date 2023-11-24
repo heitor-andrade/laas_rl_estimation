@@ -166,7 +166,7 @@ void main(void)
                 transfer_array[1]   = motor[MOTOR_1].p_motorFOC->idRef;
                 transfer_array[2]   = motor[MOTOR_1].p_motorFOC->id;
                 transfer_array[3]   = motor[MOTOR_1].test;  // resistance
-                transfer_array[4]   = motor[MOTOR_1].test1; // frequence
+                transfer_array[4]   = motor[MOTOR_1].test1; // test_value
 
                 IPC_setFlagLtoR(IPC_CPU1_L_CM_R, IPC_CPU1_TO_CM_FLAG);
             }

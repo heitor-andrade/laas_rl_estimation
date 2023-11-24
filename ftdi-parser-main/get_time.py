@@ -24,6 +24,10 @@ ia = ud.current0
 R = 0.242
 L = 70e-6
 
+# Line reference
+R_line = R*2
+L_line = L*2
+
 # code parameter
 R_code = 0.53
 L_code = 210e-6
@@ -39,7 +43,7 @@ time_rl = time.time() - init_time
 time_ref_current = 0
 sample_current = 0
 
-while test <= 2:
+while test <= 3:
     
 
     # Get variables
@@ -47,6 +51,7 @@ while test <= 2:
     resis = ud.velocity0
     inductance = ud.current0
 
+    ud.kp0 = test 
     # Change RL parameters
     if state == state_rl:
         if test == 1 :
@@ -55,6 +60,9 @@ while test <= 2:
         elif test == 2:
             ud.refVelocity0 = R
             ud.kd0          = L
+        elif test == 3 :
+            ud.refVelocity0 = R_line
+            ud.kd0          = L_line
 
         if now - time_rl > 0.1:
             state = state_current
@@ -77,7 +85,6 @@ while test <= 2:
             sample_current = 0
             ud.refCurrent0 = 0
             test += 1
-
 
     # Prints
     count_print += 1

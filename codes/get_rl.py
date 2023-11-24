@@ -23,8 +23,8 @@ while True:
 
 
     now = time.time() - init_time
-    # resis = ud.velocity0
-    # inductance = ud.current0
+    resis = ud.velocity0
+    inductance = ud.current0
 
     count_print += 1
     if count_print == 10:

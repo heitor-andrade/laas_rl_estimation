@@ -14,21 +14,21 @@ for i in range(len(times)):
         _frequences.append(frequences[i])
         _ias.append(ias[i])
 
-fig, ax = plt.subplots(2)
-ax[0].plot(_times, _ias, '.',label = "Ia [A]")
-ax[0].set_title(f"Time X Current")
-ax[0].set_xlabel("Time [s]")
-ax[0].set_ylabel("Current [A]")
-ax[0].grid()
-ax[0].legend()
+# fig, ax = plt.subplots(2)
+# ax[0].plot(_times, _ias, '.',label = "Ia [A]")
+# ax[0].set_title(f"Time X Current")
+# ax[0].set_xlabel("Time [s]")
+# ax[0].set_ylabel("Current [A]")
+# ax[0].grid()
+# ax[0].legend()
 
 
-ax[1].plot(_times, _frequences)
-ax[1].set_title(f"Time X Frequence")
-ax[1].set_xlabel("Time [s]")
-ax[1].set_ylabel("Frequence [Hz]")
-ax[1].legend()
-plt.show()
+# ax[1].plot(_times, _frequences)
+# ax[1].set_title(f"Time X Frequence")
+# ax[1].set_xlabel("Time [s]")
+# ax[1].set_ylabel("Frequence [Hz]")
+# ax[1].legend()
+# plt.show()
 
 # filter f = 0
 while frequences[0] == 0:
@@ -68,9 +68,8 @@ a0 = amplitudes[0]
 gain_currents = [amp/a0 for amp in amplitudes]
 fs.sort()
 
-
 # Compute inductance with motor data
-R = 0.242
+R_phase = 0.242
 F_DESIRED = 500
 
 for i in range(len(fs)):
@@ -80,27 +79,26 @@ for i in range(len(fs)):
 f = fs[index_f]
 gain_current = gain_currents[index_f]
 
-resistance = R
+resistance = R_phase * 3/2
 impedance_ac = resistance/gain_current                      # impedance gain is the invese of impedan
 reactance = np.sqrt(impedance_ac**2 - resistance**2)
-inductance = reactance / (2 * np.pi * f)
+inductance_data = reactance / (2 * np.pi * f)
+print(inductance_data * 2/3)
 
-print(inductance)
+U = 1
 
 # Compute Bode with inductance found in data
 def compute_impedance(R, f, L = 151e-6):
     return np.sqrt(R**2 + (2*np.pi*f*L)**2)
-L = inductance
-Zs = [compute_impedance(R, f, L) for f in fs]
-U = 1
+Zs = [compute_impedance(resistance, f, inductance_data) for f in fs]
 currents_ac = [U/Z for Z in Zs]
-current_dc = U/R
+current_dc = U/resistance
 gain_currents_theorical = [current/current_dc for current in currents_ac]
 
 
 # Compute Bode with inductance found in code
-INDUCTANCE_CODE = 70e-6
-R = 0.242
+INDUCTANCE_CODE = 210e-6    # induc equivalent
+R = 0.53                    # resis equivalent
 current_dc = U/R
 Zs = [compute_impedance(R, f, INDUCTANCE_CODE) for f in fs]
 currents_ac = [U/Z for Z in Zs]
@@ -108,7 +106,7 @@ gain_currents_code = [current/current_dc for current in currents_ac]
 
 # Plot data
 plt.plot(fs, 20*np.log10(gain_currents), label = "Data")
-plt.plot(fs, 20*np.log10(gain_currents_theorical), label = f"Theorical with inductance of data. L = {round(L*1e6)}e-6")
+plt.plot(fs, 20*np.log10(gain_currents_theorical), label = f"Theorical with inductance of data. L = {round(inductance_data*1e6)}e-6")
 plt.plot(fs, 20*np.log10(gain_currents_code), label = f"Theorical with inductance of code. L = {round(INDUCTANCE_CODE * 1e6)}e-6")
 plt.xlabel("Frequence [Hz]")
 plt.ylabel("Gain Current [Db]")

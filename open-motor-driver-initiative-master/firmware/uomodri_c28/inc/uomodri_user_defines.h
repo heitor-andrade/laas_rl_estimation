@@ -1057,9 +1057,9 @@
  ***********************************************************************/
 
 // statorResEst variables
-#define COMPUTE_RL_ENABLE           1       // Enables estimation of RL parameters and updating of current control constants
-#define INF_CURRENT_R_ESTIMATION    4       // Inferior point of the current used to calculate the resistance [A]
-#define SUP_CURRENT_R_ESTIMATION    5       // Superior current point used to calculate resistance [A]
+#define COMPUTE_RL_ENABLE           0       // Enables estimation of RL parameters and updating of current control constants
+#define INF_CURRENT_R_ESTIMATION    5       // Inferior point of the current used to calculate the resistance [A]
+#define SUP_CURRENT_R_ESTIMATION    6       // Superior current point used to calculate resistance [A]
 #define CURRENT_SAMPLES_NUMBER      20      // Number of points used to calculate the average current
 #define CENTER_DTC_RL               0.5f    // Initial duty cycle value of the 3 phases. Used to avoid non-linearity at low duty cycles
 

@@ -300,8 +300,8 @@ inline bool_t MOT_runControl(motor_t* p_motor)
 
     case MOTOR_STATE_READY:
         p_motor->itCnt         += 1U;
-        // p_foc->idRef            = p_foc->motor_cmd.iqff;
-        p_foc->idRef            = 0;
+        p_foc->idRef            = p_foc->motor_cmd.iqff;
+        // p_foc->idRef            = 0;
         p_foc->iqRef            = FOC_runPD(&p_foc->pdPosVel);
         p_foc->iqRef            = 0;
         p_motor->motor_state    = (en_bit.motorEnable)              ? (MOTOR_STATE_READY)       : (MOTOR_STATE_STOP);
@@ -309,23 +309,36 @@ inline bool_t MOT_runControl(motor_t* p_motor)
         FOC_runControl(p_foc);
         MOT_runCommand(p_motor, p_foc->dtc_u, p_foc->dtc_v, p_foc->dtc_w);
 
-        // // // TIME PLOT
-        // // change constants
-        // float resistance = p_foc->motor_cmd.velRef;
-        // float inductance = p_foc->motor_cmd.kdCoeff;
+        // // Tension/Current test
+        // if(p_foc->motor_cmd.velRef != 0)
+        //     p_foc->dtc_u = p_foc->motor_cmd.velRef;
+        // else
+        //     p_foc->dtc_u = 0;
 
-        // p_motor->test = resistance;
-        // p_motor->test1 = inductance;
-
-        // p_foc->piIq.kp = (inductance * 2.0f * M_PI * MOTOR1_CURRENT_CUTOFF_FREQ);
-        // p_foc->piIq.ki = (resistance * 2.0f * M_PI * MOTOR1_CURRENT_CUTOFF_FREQ);
-        // p_foc->piId.kp = (inductance * 2.0f * M_PI * MOTOR1_CURRENT_CUTOFF_FREQ);
-        // p_foc->piId.ki = (resistance * 2.0f * M_PI * MOTOR1_CURRENT_CUTOFF_FREQ);
-
-        // FOC_runControl(p_foc);
+        // p_motor->test = p_foc->dtc_u;
+        // p_motor->test1 = p_foc->motor_acq.ia;
+        // p_foc->dtc_v = 0.5;
+        // p_foc->dtc_w = 0.5;
         // MOT_runCommand(p_motor, p_foc->dtc_u, p_foc->dtc_v, p_foc->dtc_w);
 
-        // // // CONSTANTS TEST AND BODE PLOT
+        // TIME PLOT
+        // change constants
+        float resistance = p_foc->motor_cmd.velRef;
+        float inductance = p_foc->motor_cmd.kdCoeff;
+
+
+        p_motor->test = resistance;
+        p_motor->test1 = p_foc->motor_cmd.kpCoeff; // test
+
+        p_foc->piIq.kp = (inductance * 2.0f * M_PI * MOTOR1_CURRENT_CUTOFF_FREQ);
+        p_foc->piIq.ki = (resistance * 2.0f * M_PI * MOTOR1_CURRENT_CUTOFF_FREQ);
+        p_foc->piId.kp = (inductance * 2.0f * M_PI * MOTOR1_CURRENT_CUTOFF_FREQ);
+        p_foc->piId.ki = (resistance * 2.0f * M_PI * MOTOR1_CURRENT_CUTOFF_FREQ);
+
+        FOC_runControl(p_foc);
+        MOT_runCommand(p_motor, p_foc->dtc_u, p_foc->dtc_v, p_foc->dtc_w);
+
+        // BODE PLOT
         // // change constants
         // float resistance = p_foc->motor_cmd.velRef;
         // float inductance = p_foc->motor_cmd.kdCoeff;
